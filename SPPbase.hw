@@ -1,0 +1,2 @@
+<?xml version="1.0"?>
+<hardware typeName="SPPbase" typeCode="4" version="1"><clusterOnly>false</clusterOnly><daemon>3551</daemon><componentType>any</componentType><fields/><commands/><monitoring><command opcode="105" numParams="2"><displayLabel>UserData</displayLabel><description>read user data file</description><units>Pkts</units><param editable="true"><plabel>file</plabel><ptype>string</ptype></param><param editable="true"><plabel>field</plabel><ptype>int</ptype></param></command></monitoring><ports numPorts="0"><fields/><commands/><monitoring/></ports></hardware>

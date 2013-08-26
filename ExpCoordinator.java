@@ -61,8 +61,8 @@ import org.xml.sax.*;
 
 public class ExpCoordinator //implements Mode.MListener
 {
-	public static final double VERSION = 7.4;
-	public static final int VERSION_BYTES = 0x7400; //& with ops to add version
+	public static final double VERSION = 7.5;
+	public static final int VERSION_BYTES = 0x7500; //& with ops to add version
 	public static PrintMessage printer = null;
 	public static ExpCoordinator theCoordinator = null;
 	public static final int NEW = 0;

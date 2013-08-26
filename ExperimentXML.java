@@ -212,6 +212,7 @@ public class ExperimentXML extends DefaultHandler
 	public static final String VINTERFACE = "vinterface";
 	public static final String VIRTUAL = "virtual";
 	public static final String VLINK = "vlink";
+	public static final String VPORTS = "virtualPorts";
 	public static final String VTOPO = "virtualTopology";
 	public static final String VOQ = "voq";
 	public static final String WIDTH = "width";

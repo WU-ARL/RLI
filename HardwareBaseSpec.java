@@ -244,7 +244,9 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 		}
 
 		public int getNumPorts() { return numPorts;}
+		public void setNumPorts(int n) { numPorts = n;}
 		public String getInterfaceType() { return interfaceType;}
+		public void setInterfaceType(String it) {interfaceType = it;}
 		//interface ComponentXMLHandler.Spec
 		public CommandSpec addCommand(CommandSpec cspec)
 		{

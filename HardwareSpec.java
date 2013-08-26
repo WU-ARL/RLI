@@ -426,6 +426,14 @@ public class HardwareSpec extends HardwareBaseSpec implements ComponentXMLHandle
 
 			public void startElement(String uri, String localName, String qName, Attributes attributes) 
 			{
+				if (localName.equals(ExperimentXML.PORTS) && hardware != null)
+				{
+					if (attributes.getValue(ExperimentXML.VPORTS) != null) 
+					{
+						hardware.getPortSpec().setNumPorts(Integer.parseInt(attributes.getValue(ExperimentXML.VPORTS)));	
+						if (attributes.getValue(ExperimentXML.INTERFACE_TYPE) != null) hardware.getPortSpec().setInterfaceType(attributes.getValue(ExperimentXML.INTERFACE_TYPE));
+					}
+				}
 				if(!localName.equals(ExperimentXML.COMMAND) ||
 						!section.equals(ExperimentXML.CONFIGURE))
 					super.startElement(uri, localName, qName, attributes);

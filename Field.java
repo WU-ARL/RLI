@@ -288,7 +288,10 @@ public class Field extends Param
 			if (!cmd.isImmediate())
 				ExpCoordinator.theCoordinator.addEdit(new Command.Edit(cmd, cmd.getCurrentValues(), ExpCoordinator.theCoordinator.getCurrentExp()));
 			else
-				((NCCPOpManager.Manager)getONLComponent()).addOperation(cmd.createNCCPOp(cmd.getCurrentValues()));
+			{
+				Command.NCCPOp nccp_op = cmd.createNCCPOp(cmd.getCurrentValues());
+				if (nccp_op != null) ((NCCPOpManager.Manager)getONLComponent()).addOperation(nccp_op);
+			}
 			//((NCCPOpManager.Manager)getONLComponent()).addOperation(new Command.NCCPOp(getCommand(), getCommand().getParamValues(), getONLComponent()));
 		}
 		protected void addOperation(Command cspec) {} 

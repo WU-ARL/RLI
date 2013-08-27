@@ -587,6 +587,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 		}
 		protected void sendMessage() 
 		{
+			if (getCommandOp() == null) return;
 			ExpCoordinator.print(new String("HWTableElement(" + tableElement.toString() + ").Edit.sendMessage"), HWTable.TEST_HWTABLE);
 			if (tableElement.isEnabled()) tableElement.hwtable.addOperation(getCommandOp());
 		}

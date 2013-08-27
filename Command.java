@@ -98,8 +98,11 @@ public class Command extends CommandSpec
 		public void setCanUndo(boolean b) { can_undo = b;}
 		protected void sendMessage() 
 		{
-			ExpCoordinator.printer.print(new String("Command.Edit.sendMessage"), HWTable.TEST_HWTABLE);
-			((NCCPOpManager.Manager)onlComponent).addOperation(commandOp);
+			if (commandOp != null)
+			{
+				ExpCoordinator.printer.print(new String("Command.Edit.sendMessage"), HWTable.TEST_HWTABLE);
+				((NCCPOpManager.Manager)onlComponent).addOperation(commandOp);
+			}
 		}
 		protected void sendUndoMessage() {}
 		public boolean isCancelled(ONLComponent.Undoable un)
@@ -248,7 +251,10 @@ public class Command extends CommandSpec
 			if (!cmd.isImmediate())
 				ExpCoordinator.theCoordinator.addEdit(new Command.Edit(cmd, vals, ExpCoordinator.theCoordinator.getCurrentExp()));
 			else
-				((NCCPOpManager.Manager)onlComponent).addOperation(cmd.createNCCPOp(vals));
+			{
+				Command.NCCPOp nccp_op = cmd.createNCCPOp(vals);
+				if (nccp_op != null) ((NCCPOpManager.Manager)onlComponent).addOperation(nccp_op);
+			}
 		}
 		protected Command getCommand() { return command;}
 		public void setPrefix(Object[] pr) { prefix = pr;}
@@ -466,7 +472,11 @@ public class Command extends CommandSpec
 		return rtn;
 	}  
 
-	public Command.NCCPOp createNCCPOp(Object[] vals) { return (new Command.NCCPOp(this, vals, parentComponent));}
+	public Command.NCCPOp createNCCPOp(Object[] vals) 
+	{ 
+		if (opcode >= 0) return (new Command.NCCPOp(this, vals, parentComponent));
+		return null;
+	}
 
 	public void writeXML(XMLStreamWriter xmlWrtr) throws XMLStreamException { writeXML(xmlWrtr, getXMLElemName());}
 	public void writeXML(XMLStreamWriter xmlWrtr, String elemnm) throws XMLStreamException

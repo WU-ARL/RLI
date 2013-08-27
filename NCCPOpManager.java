@@ -93,6 +93,7 @@ public abstract class NCCPOpManager extends MonitorEntry.Base
 	public void addOperation(Operation op) { addOperation(op, false);}
 	protected void addOperation(Operation op, boolean dont_send)
 	{
+		if (op == null) return;
 		if (!added) 
 		{
 			mdaemon.addOpManager(this);

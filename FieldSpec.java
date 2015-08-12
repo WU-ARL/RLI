@@ -40,7 +40,9 @@ public class FieldSpec extends ParamSpec
 		{
 			super();
 			commandType = CommandSpec.COMMAND;
-			numParams = 1;//Integer.parseInt(attributes.getValue(ExperimentXML.NUMPARAMS));
+			numParams = 1;
+			if (attributes.getValue(ExperimentXML.NUMPARAMS) != null)
+				numParams = Integer.parseInt(attributes.getValue(ExperimentXML.NUMPARAMS));
 			params.add(new ParamSpec(fs, this));
 			addDisplayGroup(new Integer(0));
 			opcode = Integer.parseInt(attributes.getValue(ExperimentXML.OPCODE));

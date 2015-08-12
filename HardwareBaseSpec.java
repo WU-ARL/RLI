@@ -43,6 +43,8 @@ import java.awt.Color;
 import javax.xml.stream.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
+
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Frame;
 import java.awt.Component;
@@ -77,6 +79,8 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 	protected String resourceName = null;
 	protected boolean has_daemon = false;
 	protected int cpPort = -1;
+	protected int cores = 1;
+	protected int memory = 1;
 	//private int numPorts = 0;
 	protected double version = 0;
 	protected boolean clusterOnly = false;
@@ -85,6 +89,7 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 	protected String componentType = ANY;//NOT_ADDRESSED;
 	private String description = "";
 	private Color iconColor = null;
+	private Dimension iconSize = null;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////// HardwareBaseSpec.XMLHandler ////////////////////////////////////////////////////////
@@ -130,6 +135,11 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 						Integer.parseInt(attributes.getValue(uri, G)),
 						Integer.parseInt(attributes.getValue(uri, B)));
 			}
+			if (localName.equals(ExperimentXML.SIZE))
+			{
+			   hardware.setIconSize(Integer.parseInt(attributes.getValue(uri, ExperimentXML.WIDTH)),
+					   Integer.parseInt(attributes.getValue(uri, ExperimentXML.HEIGHT)));
+			}
 		}
 		public void characters(char[] ch, int start, int length)
 		{
@@ -144,6 +154,10 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 			{
 				hardware.componentType = new String(ch, start, length);
 			}
+			if (currentElement.equals(ExperimentXML.CORES))
+				hardware.setCores(Integer.parseInt(new String(ch, start, length)));
+			if (currentElement.equals(ExperimentXML.MEMORY))
+				hardware.setMemory(Integer.parseInt(new String(ch, start, length)));
 			if (currentElement.equals(ExperimentXML.DESCRIPTION))  hardware.description = new String(ch, start,length);
 		}
 	}// end inner class HardwareBaseSpec.XMLHandler
@@ -162,6 +176,7 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 		Vector tableSpecs = null;
 		int numPorts = 0;
 		String interfaceType = ExperimentXML.ITYPE_1G;
+		boolean virtualports = false;
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////// HardwareBaseSpec.PortSpec.XMLHandler /////////////////////////////////////////////////
@@ -170,6 +185,7 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 		public PortSpec(String uri, Attributes attributes, HardwareBaseSpec hw)
 		{
 			this(hw);
+			if (attributes.getValue(ExperimentXML.VPORTS) != null) virtualports = true;
 			if (attributes.getValue(ExperimentXML.NUMPORTS) != null) numPorts = Integer.parseInt(attributes.getValue(ExperimentXML.NUMPORTS));
 			if (attributes.getValue(ExperimentXML.INTERFACE_TYPE) != null) interfaceType = attributes.getValue(ExperimentXML.INTERFACE_TYPE);
 			if (interfaceType == null) interfaceType = ExperimentXML.ITYPE_1G;
@@ -231,6 +247,7 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 		public void setNumPorts(int n) { numPorts = n;}
 		public String getInterfaceType() { return interfaceType;}
 		public void setInterfaceType(String it) {interfaceType = it;}
+		public boolean hasVPorts() { return virtualports;}	
 		//interface ComponentXMLHandler.Spec
 		public CommandSpec addCommand(CommandSpec cspec)
 		{
@@ -326,6 +343,8 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 		cpPort = hs.cpPort;
 		version = hs.version;
 		clusterOnly = hs.clusterOnly;
+		cores = hs.cores;
+		memory = hs.memory;
 		componentType = new String(hs.componentType);
 		int max = hs.fieldSpecs.size();
 		int i = 0;
@@ -514,4 +533,10 @@ public class HardwareBaseSpec implements ComponentXMLHandler.Spec
 	public String getDescription() { return (new String(getLabel() + ": " + description));}
 	public void setIconColor(int r, int g, int b) { iconColor = new Color(r,g,b);}
 	public Color getIconColor() { return iconColor;}
+	public void setIconSize(int w, int h) { iconSize = new Dimension(w, h);}
+	public Dimension getIconSize() { return iconSize;}
+	public void setCores(int c) { cores = c;}
+	public int getCores() { return cores;}
+	public void setMemory(int m) { memory = m;}
+	public int getMemory() { return memory;}
 }

@@ -33,6 +33,8 @@
  */
 import javax.swing.*;
 import javax.swing.undo.*;
+import javax.xml.stream.XMLStreamException;
+
 import java.awt.event.*;
 import java.lang.String;
 import java.util.*;
@@ -45,8 +47,8 @@ import org.xml.sax.*;
 
 public class ExpCoordinator //implements Mode.MListener
 {
-	public static final double VERSION = 7.5;
-	public static final int VERSION_BYTES = 0x7500; //& with ops to add version
+	public static final double VERSION = 8.4;
+	public static final int VERSION_BYTES = 0x8400; //& with ops to add version
 	public static PrintMessage printer = null;
 	public static ExpCoordinator theCoordinator = null;
 	public static final int NEW = 0;
@@ -252,7 +254,7 @@ public class ExpCoordinator //implements Mode.MListener
 			String[] tmp_strarray = {ExperimentXML.ITYPE_1G, ExperimentXML.ITYPE_10G};
 			JComboBox cb = new JComboBox(tmp_strarray);
 			cb.setEditable(false);
-			Object[] objs = {num, (new ONL.ComponentwLabel(cb, "interface type:"))};
+			Object[] objs = {num};//, (new ONL.ComponentwLabel(cb, "interface type:"))};
 			int rtn = JOptionPane.showOptionDialog(mainWindow, 
 					objs, 
 					"Add GigE Switch", 
@@ -270,9 +272,48 @@ public class ExpCoordinator //implements Mode.MListener
 					GigEDescriptor g = topology.getNewVGigE();//Integer.parseInt(tf.getText()));
 					if (g != null) 
 					{
-						g.setInterfaceType((String)cb.getSelectedItem());
+						//g.setInterfaceType((String)cb.getSelectedItem());
 						getCurrentExp().addNode(g);
 					}
+				}
+			}
+		}
+	}
+	//sets experiment password atarts as a generated password but can be overwritten by user
+	private class ExpPasswordAction extends ONL.UserAction 
+	{
+		public ExpPasswordAction()
+		{
+			super("Change VM Password");
+		}
+		public void actionPerformed(ActionEvent e)
+		{
+			final String opt0 = "Enter";
+			final String opt1 = "Cancel";
+			String warning = "Warning: password is sent unencrypted";
+			Object[] options = {opt0,opt1};
+			TextFieldwLabel tf = new TextFieldwLabel(20, "password:");
+			tf.setText(currentExperiment.getGeneratedPW());
+			JCheckBox gen_checkbox = new JCheckBox("use generated password:", false);
+			Object[] objs = {tf, gen_checkbox, warning};
+			
+			int rtn = JOptionPane.showOptionDialog(mainWindow, 
+					objs, 
+					"Change VM password", 
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE, 
+					null,
+					options,
+					options[0]);
+
+			if (rtn == JOptionPane.YES_OPTION)
+			{
+				if (currentExperiment != null) 
+				{
+					if (gen_checkbox.isSelected())
+						currentExperiment.setGeneratedPW(null);
+					else
+						currentExperiment.setGeneratedPW(tf.getText());
 				}
 			}
 		}
@@ -419,6 +460,111 @@ public class ExpCoordinator //implements Mode.MListener
 		public void setAppend(boolean b) { append = b;}
 		public void setSave(boolean b) { save = b;}
 	}
+
+	
+	private class BatchFileAction extends MenuFileAction implements MenuFileAction.Saveable
+	{
+		private ExpCoordinator expCoordinator = null;
+		private boolean append = false;
+		private boolean save = false;
+		private boolean on = false;
+		private JLabel batchLabel = null;
+
+		public BatchFileAction(ExpCoordinator ec, boolean ld)
+		{
+			this(ec, ld, "Start Batching");
+		}
+		public BatchFileAction(ExpCoordinator ec, boolean ld, String nm)
+		{
+			super(null, ld, null, nm, false, false);
+			expCoordinator = ec;
+			setSaveable(this);
+			setSuffix(Experiment.FILE_SUFFIX);
+			if (!ld) 
+				{
+					batchLabel = new JLabel("batching");
+					batchLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+					batchLabel.setForeground(Color.blue);
+				}
+		}
+
+		public void actionPerformed(ActionEvent e)
+		{
+			print(new String("BatchFileAction::actionPerformed save = " + save), 2);
+			
+			if (!on || isLoading())
+				super.actionPerformed(e);
+			else
+				saveToFile(null);
+		}
+		public void setOn(boolean b)
+		{
+			if (b != on)
+			{
+				ONLMainWindow mw = expCoordinator.getMainWindow();
+				if (b) 
+					{
+						putValue(Action.NAME, "Stop Batching");
+						mw.getJMenuBar().add(batchLabel);
+						mw.getJMenuBar().validate();
+					}
+				else 
+					{
+						putValue(Action.NAME, "Start Batching");
+						mw.getJMenuBar().remove(batchLabel);
+						//mw.getJMenuBar().invalidate();
+						mw.getJMenuBar().revalidate();
+						mw.getJMenuBar().validate();
+					}
+				on = b;
+				expCoordinator.setBatch(on);
+			}
+		}
+		public void saveToFile(java.io.File f)
+		{
+			print("BatchFileAction::saveToFile", 2);
+			Experiment exp = expCoordinator.getCurrentExp();
+			if (exp != null) 
+			{
+				try{
+					if (!on)
+						exp.setBatchWriter(new BufferedWriter(new FileWriter(f)));	
+					else 
+						exp.setBatchWriter(null);
+					setOn(!on);
+				}
+				catch(IOException e)
+				{
+					print(new String("BatchFileAction.saveToFile IOException " + e.getMessage()));
+				}
+			}
+		}
+		public void loadFromFile(java.io.File f)
+		{
+			print("BatchFileAction::loadFromFile", 2);
+			Experiment exp = expCoordinator.getCurrentExp();
+			if (exp != null) 
+			{
+				try{
+					XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+					ExperimentXML exp_xml = new ExperimentXML(exp, xmlReader, f, true);
+					xmlReader.parse(new InputSource(new FileInputStream(f)));
+				}
+				catch(IOException e)
+				{
+					print(new String("BatchFileAction.loadFromFile IOException " + e.getMessage()));
+				}
+				catch(SAXException e2)
+				{
+					print(new String("BatchFileAction.loadFromFile SAXException " + e2.getMessage()));
+				}
+			}
+		}
+		public void setAppend(boolean b) { append = b;}
+		public void setSave(boolean b) { save = b;}
+	}
+	
+	
 	private class ExpXMLFileAction extends MenuFileAction implements MenuFileAction.Saveable
 	{
 		private ExpCoordinator expCoordinator = null;
@@ -654,6 +800,7 @@ public class ExpCoordinator //implements Mode.MListener
 		int i = 0;
 		testCodes = new TestCodes();
 		String onlhost = "onlsrv";
+		String title = null;
 		int print_history = 0;
 		properties = new ONLPropertyList(this);
 		properties.setProperty(SPPMON, false);
@@ -724,6 +871,10 @@ public class ExpCoordinator //implements Mode.MListener
 			{
 				properties.setProperty(SPPMON, true);
 			}
+			if (args[i].startsWith("-title"))
+			{
+			    title = args[++i];
+			}
 		}
 
 		testCodes.add(DQ);
@@ -781,7 +932,12 @@ public class ExpCoordinator //implements Mode.MListener
 		if (sppmon)
 			mainWindow = new ONLMainWindow(this, new String("SPPmon v." + ExpCoordinator.VERSION));
 		else
+		{
+		    if (title != null)
+			mainWindow = new ONLMainWindow(this, new String(title + " (RLI) v." + ExpCoordinator.VERSION));
+		    else
 			mainWindow = new ONLMainWindow(this, new String("Remote Laboratory Interface (RLI) v." + ExpCoordinator.VERSION));
+		}
 	
 		mainWindow.setSize(550, 300);
 		mainWindow.addWindowListener(new MainWindowAdapter(this));
@@ -813,12 +969,10 @@ public class ExpCoordinator //implements Mode.MListener
 		{
 			hwmanager.addFromResource("IXP", "IXP.hw");
 			hwmanager.addFromResource("PC1core", "PC1core.hw");
-			//hwmanager.addFromResource("PC2core", "PC2core.hw");
-			hwmanager.addFromResource("PC8core", "PC8core.hw");
+			hwmanager.addFromResource("PC2core", "PC2core.hw");
 			hwmanager.addFromResource("PC48core", "PC48core.hw");
-			//hwmanager.addFromResource("NetFPGA", "NetFPGA.hw");
 			hwmanager.addSubtypeFromResource("HOST1core.shw");
-			hwmanager.addSubtypeFromResource("HOST8core.shw");
+			hwmanager.addSubtypeFromResource("HOST2core.shw");
 			hwmanager.addSubtypeFromResource("HOST48core.shw");
 			hwmanager.addSubtypeFromResource("NPR.shw");
 			HardwareSpec ixp_spec = hwmanager.getHardware("IXP");
@@ -873,28 +1027,6 @@ public class ExpCoordinator //implements Mode.MListener
 				hwmanager.addSubtype(s_list[j]);
 			}   
 		}
-		else
-		{
-			hwmanager.addFromResource("SPPbase", "SPPbase.hw");//new Hardware("NetFPGA.hw"));
-			hwmanager.addSubtypeFromResource("SPP.shw");
-			/*
-			File spp_tmp = new File(getDefaultDir(), "SPP.hw");
-			if (spp_tmp.exists())
-				hwmanager.addFromFile("SPP", spp_tmp);
-			else
-			{
-				spp_tmp = new File(getONLDir(), "SPP.hw");
-				if (spp_tmp.exists())
-					hwmanager.addFromFile("SPP", spp_tmp);
-				else
-				{
-					spp_tmp = new File(new File("."), "SPP.hw");
-					if (spp_tmp.exists())
-						hwmanager.addFromFile("SPP", spp_tmp);
-				}
-			}
-			*/
-		}
 	}
 
 	public void initializeTopologyActions()
@@ -906,37 +1038,43 @@ public class ExpCoordinator //implements Mode.MListener
 			topologyActions.add(new Topology.DefaultHostRtAction(topology));
 			topologyActions.add(new Topology.ClearRtsAction(topology));
 			//if (getDebugLevel() > 0) topologyActions.add(new Topology.RemoveRtsAction(topology));
-			topologyActions.add(new Topology.TopologyAction("Set Subnet Allocation") {
+			//shows experiment password in separate window
+			topologyActions.add(new ONL.UserAction("Show VM Password", true, false)
+			{	
 				public void actionPerformed(ActionEvent e)
 				{
-					final String opt0 = "OK";
-					final String opt1 = "Cancel";
-					Object[] options = {opt0,opt1};
-					JCheckBox cbox = new JCheckBox("Use Old Subnet Allocation:", isOldSubnet());
-					int rtn = JOptionPane.showOptionDialog(getMainWindow(),  
-							cbox, 
-							null,
-							JOptionPane.YES_NO_OPTION,
-							JOptionPane.QUESTION_MESSAGE, 
-							null,
-							options,
-							options[0]);
-
-					if (rtn == JOptionPane.YES_OPTION)
-					{
-						setOldSubnet(cbox.isSelected());
-					}
-				}
-				public boolean isEnabled() 
-				{
-					if (topology.getNumComponents() > 0 || isTopoSet()) return false;
-					else return (super.isEnabled());
+					if (currentExperiment != null) currentExperiment.showGeneratedPW();
 				}
 			});
-			topologyActions.add(new Topology.AddLinkAction(topology));
-			topologyActions.add(new Cluster.NSPAction());
-			//topologyActions.add(new Cluster.NPRAction());
-			//topologyActions.add(new AddHostAction(this));
+			topologyActions.add(new ExpPasswordAction());
+			//topologyActions.add(new Topology.TopologyAction("Set Subnet Allocation") {
+				//public void actionPerformed(ActionEvent e)
+				//{
+					//final String opt0 = "OK";
+					//final String opt1 = "Cancel";
+					//Object[] options = {opt0,opt1};
+					//JCheckBox cbox = new JCheckBox("Use Old Subnet Allocation:", isOldSubnet());
+					//int rtn = JOptionPane.showOptionDialog(getMainWindow(),  
+					//		cbox, 
+					//		null,
+					//		JOptionPane.YES_NO_OPTION,
+					//		JOptionPane.QUESTION_MESSAGE, 
+					//		null,
+					//		options,
+					//		options[0]);
+
+				//	if (rtn == JOptionPane.YES_OPTION)
+				//	{
+				//		setOldSubnet(cbox.isSelected());
+			    //	}
+				//}
+				//public boolean isEnabled() 
+				//{
+				//	if (topology.getNumComponents() > 0 || isTopoSet()) return false;
+				//	else return (super.isEnabled());
+				//}
+			//});
+			//topologyActions.add(new Topology.AddLinkAction(topology));
 			topologyActions.add(new AddVGigEAction(this));
 		}
 		topologyActions.add(new Topology.AddHWTypeAction());
@@ -977,6 +1115,7 @@ public class ExpCoordinator //implements Mode.MListener
 			fileActions.add(new Reservation.Action(this));
 			fileActions.add(new Reservation.ExtendAction(this));
 			fileActions.add(new Reservation.CancelAction(this));
+			
 		}
 		//fileActions.add(new AdvancedMenuItem());
 		tmp_action = new ECMenuAction(this, SAVEFILE, "Save");
@@ -1012,6 +1151,8 @@ public class ExpCoordinator //implements Mode.MListener
 		editActions.add(tmp_action);
 		tmp_action = new ECMenuAction(this, SELECTALL, "Select All");
 		editActions.add(tmp_action);
+		editActions.add(new BatchFileAction(this, false));
+		editActions.add(new BatchFileAction(this, true, "Load Commands"));
 	}
 
 	public void initializeExtraMenu()
@@ -1169,7 +1310,21 @@ public class ExpCoordinator //implements Mode.MListener
 	}
 	public Vector getCurrentSelection() { return currentSelection;}
 	public void addEdit(ONLComponent.Undoable e) 
-	{ 
+	{  
+		if (isBatch() && e instanceof Command.Edit)
+		{
+			Command cmd = ((Command.Edit)e).getBatchCommand();
+				//get the current experiment
+			try
+			{
+					cmd.writeXMLBatchCommand(getCurrentExp().getBatchWriter());
+			}
+			catch(XMLStreamException se)
+			{
+					ExpCoordinator.print(new String("ExpCoordinator.addEdit writing command for batch XMLStreamException " + se.getMessage()));
+					se.printStackTrace();
+			}
+		}
 		if (e == null) return;
 		print("ExpCoordinator.addEdit", TEST_ADD);
 		//if (isObserver() || isSnapshotView()) return;
@@ -1350,15 +1505,10 @@ public class ExpCoordinator //implements Mode.MListener
 	public void addToProgressBar(ONLComponent c) 
 	{ 
 		if (isSPPMon()) return;
-		if (c instanceof NSPDescriptor)
-			statusDisplay.increaseProgressMax(540);
+		if (c instanceof Hardware)
+		    statusDisplay.increaseProgressMax(120);
 		else
-		{
-			if (c instanceof Hardware)
-				statusDisplay.increaseProgressMax(120);
-			else
-				statusDisplay.increaseProgressMax(30);
-		}
+		    statusDisplay.increaseProgressMax(30);
 		statusDisplay.waitForStatus(c);
 	}
 	public void addToProgressBar(NCCPOpManager.Operation o) 
@@ -1522,6 +1672,8 @@ public class ExpCoordinator //implements Mode.MListener
 		//else 
 		return (theCoordinator.properties.getPropertyBool(RECORDING));
 	}
+	public static boolean isBatch(){ return (theCoordinator.properties.getPropertyBool(ExperimentXML.BATCH));}
+	protected static void setBatch(boolean b)  { theCoordinator.properties.setProperty(ExperimentXML.BATCH, b);}
 	protected static void setRecording(boolean b) { theCoordinator.properties.setProperty(RECORDING, b);}
 	protected void setCommit(boolean b) { statusDisplay.setCommitBorder(b);}
 	protected void addStatusListener(StatusDisplay.Listener l) { statusDisplay.addListener(l);}

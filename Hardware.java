@@ -45,7 +45,10 @@ import javax.xml.stream.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
+//import MonitorDataType.Base.XMLHandler.ComponentHandler;
 
+
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Frame;
 import java.awt.Component;
@@ -57,6 +60,8 @@ import java.awt.Component;
 
 public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Field.Owner
 { 
+	public static final int MAX_PORTS = 25;
+	public static final int TEST_BATCHING = 1;
 	public static final int TEST_LOADING = 3;
 	public static final int TEST_PORT = 3;
 	public static final int TEST_MONITOR = 5;
@@ -67,12 +72,13 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	public static final String CPREQ = "cprequested";
 	public static final String CTL_PORT_STR =  ExperimentXML.CPPORT;
 	public static final String RETURN_NDX_STR = "RETURN_NDX";
+	public static final String VMNAME = "vmname";
 	public static final String INDEX = "index";
 	public static final String CPHOST = "cphost";
 	public static final String IPBASEADDR = "ipbaseaddr";
 	private HardwareSpec.Subtype hwType = null;
 	private int returnIndex = 0;
-	protected int numPorts = NSPMonClasses.NUMBEROFPORTS;
+	protected int numPorts = 8;
 	protected Vector<ONLComponent.PortBase> ports = null;
 	protected Vector<Field> fields = null;
 	protected Vector assigners = null;
@@ -736,8 +742,12 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			Command.CAction ca;
 			for (int i = 0; i < max; ++i)
 			{
-				ca = (Command.CAction)actions.elementAt(i);
-				if (ca.getCommand().getOpcode() == monitor_id) return (ca.getCommand());
+				Object elem = actions.elementAt(i);
+				if (elem instanceof Command.CAction)
+				{
+					ca = (Command.CAction)actions.elementAt(i);
+					if (ca.getCommand().getOpcode() == monitor_id) return (ca.getCommand());
+				}
 			}
 			return null;
 		}
@@ -1141,8 +1151,17 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			}
 			if (getCurrentElement().equals(ExperimentXML.HWTABLE))
 			{
+				ExpCoordinator.print(new String("Hardware.HWContentHandler.startElement " + getCurrentElement() + " for " + getComponent().getLabel() + " adding table handler"), 3);
 				HWTable table = (HWTable)((Hardware)getComponent()).getTable(attributes.getValue(ExperimentXML.TITLE));
 				expXML.setContentHandler(table.getContentHandler(expXML));
+			}
+			if (getCurrentElement().equals(ExperimentXML.ROUTE_TABLE))
+			{
+				ExpCoordinator.print(new String("Hardware.HWContentHandler.startElement " + getCurrentElement() + " for " + getComponent().getLabel() + " adding route table handler"), 3);			
+				//HWTable table = (HWTable)((Hardware)getComponent()).getTable(attributes.getValue(ExperimentXML.TITLE));
+				HWTable table = (HWTable)((Hardware)getComponent()).getTable(attributes.getValue(ExperimentXML.TITLE), ONLComponent.RTABLE);
+				if (table != null) expXML.setContentHandler(table.getContentHandler(expXML));
+				else ExpCoordinator.print("table null", 3);
 			}
 			if (getCurrentElement().equals(ExperimentXML.PORT))
 			{
@@ -1234,6 +1253,12 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 				//initialize();
 				if (position != null) getComponent().getGraphic().setLocation(position);
 				component.getGraphic().setSpinnerPosition(spinner);
+				//update main route table if there is one
+				//HWTable hwtable = (HWTable)((Hardware)getComponent()).getTableByType(ExperimentXML.ROUTE_TABLE);
+				//if (hwtable != null && hwtable instanceof HWRouteTable)
+				//{
+					//((HWRouteTable)hwtable).setNextHops();
+				//}
 			}
 			if (localName.equals(ExperimentXML.SUBHWTYPE))
 			{
@@ -1388,11 +1413,12 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		setIndex();
 		int max = 0;
 		int i;
-		if (hwType != null) //not NSP
+		if (hwType != null) 
 		{
 			addToDescription(ONLComponent.TYPE, hwType.getTypeLabel());
 			addToDescription(ExperimentXML.INTERFACE_TYPE, hwType.getPortSpec().getInterfaceType());
 			if (getIconColor() == null) setIconColor(hwType.getIconColor());
+			if (getIconSize() == null)  setIconSize(hwType.getIconSize());
 			Vector aspecs = hwType.getAssignerSpecs();
 			max = aspecs.size();
 			for (i = 0; i < max; ++i)
@@ -1412,16 +1438,22 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		addStateListener(new String[]{ CTL_PORT_STR, INDEX, CPHOST, IPBASEADDR});
 		if (hwType != null) //not NSP
 		{
-			if (hwType.getRebootSpec() != null)
-				rebootCommand = new Command(hwType.getRebootSpec(), this);
-			else rebootCommand = null;
-			if (hwType.getInitSpec() != null)
+			if (rebootCommand == null)
+				{
+					if (hwType.getRebootSpec() != null)
+				       rebootCommand = new Command(hwType.getRebootSpec(), this);
+			        else rebootCommand = null;
+				}
+			if (initCommand == null)
 			{
-				ExpCoordinator.print(new String("Hardware(" + getLabel() + ").initialize init command:"), TEST_INITCMD);
-				initCommand = new Command(hwType.getInitSpec(), this);
-				initCommand.print(TEST_INITCMD);
+				if (hwType.getInitSpec() != null)
+					{
+						ExpCoordinator.print(new String("Hardware(" + getLabel() + ").initialize init command:"), TEST_INITCMD);
+						initCommand = new Command(hwType.getInitSpec(), this);
+						initCommand.print(TEST_INITCMD);
+					}
+				else initCommand = null;
 			}
-			else initCommand = null;
 			Vector<CommandSpec> cfgParams = hwType.getCfgCommands();
 			//need to send cfg commands
 			max = cfgParams.size();
@@ -1621,6 +1653,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 				addChild(tmp_port);
 			}
 		}
+		if (!there) setProperty(ONLComponent.PORTS_INIT, true);
 		if (ExpCoordinator.isOldSubnet() && getBaseIPAddr() != null) setBaseIPAddr(getBaseIPAddr());
 	}
 	public void writeExpDescription(ONL.Writer tw)  throws IOException
@@ -1810,6 +1843,10 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		returnIndex = 0; //reader.readInt();
 		ExpCoordinator.print(new String("Hardware returnIndex = " + returnIndex), 5);
 		setProperty(RETURN_NDX_STR, returnIndex);
+		String vm_str = reader.readString().trim();
+		setProperty(VMNAME, vm_str);
+		if (vm_str.length() > 0)
+			addToDescription(VMNAME, new String("VM host: " + vm_str));
 	}
 
 	public void writeParams(ONL.Writer writer) throws IOException
@@ -1823,8 +1860,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	{
 		if (hwType != null)
 			ExpCoordinator.print(new String("Hardware.initializeActions hwType = " + hwType.getLabel()), 5);
-		else
-			ExpCoordinator.print("Hardware.initializeActions hwType = NSP", 5);
 		if (hwType != null)
 		{
 			initializeDaemons();
@@ -1964,17 +1999,18 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		//set background color
 		if (bg_color == null)
 		{
-			if (isType(ONLComponent.NSP_LBL))
-				bg_color = new Color(127,211,239);//rtn.setBackground(new Color(127,211,239));
-			else
-			{
-				if (isType(ONLComponent.NPR_LBL))
-					bg_color = new Color(127,239,167);//rtn.setBackground(new Color(127,239,167));
-				else
-					bg_color = new Color(213,119,239);//rtn.setBackground(new Color(213,119,239));
-			}
+		    if (isType(ONLComponent.NPR_LBL))
+			bg_color = new Color(127,239,167);//rtn.setBackground(new Color(127,239,167));
+		    else
+			bg_color = new Color(213,119,239);//rtn.setBackground(new Color(213,119,239));
 		}
 		if (bg_color != null) rtn.setBackground(bg_color);
+		Dimension g_sz = getIconSize();
+		if (g_sz == null)
+		{
+			g_sz = new Dimension(82,82);
+		}
+		if (g_sz != null) rtn.setSize(g_sz);
 	}
 
 	protected JFrame getFrame() { return frame;}
@@ -2041,6 +2077,16 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		desktop.setSelectedFrame(f);
 	}
 	public int getNumPorts() { return numPorts;}
+	public int getCores() 
+	{
+		if (hwType != null) return (hwType.getCores());
+		else return 1;
+	}
+	public int getMemory() 
+	{
+		if (hwType != null) return (hwType.getMemory());
+		else return 1;
+	}
 
 	public ContentHandler getContentHandler(ExperimentXML expXML)
 	{
@@ -2171,6 +2217,17 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	}
 	public String getCPHost() { return (properties.getProperty(CPHOST));}
 	public String getBaseIPAddr() { return (properties.getPropertyString(IPBASEADDR));}
+	public int getPortBandwidth()
+	{
+		int m = 1;
+		String interfaceType = getInterfaceType();
+		
+		if (interfaceType.endsWith("G")) m = 1000;
+	    int end = interfaceType.length() - 1;
+		int rtn = Integer.parseInt(interfaceType.substring(0,end));
+		rtn = rtn * m;
+		return rtn;
+	}
 	public String getIPAddrString() { return (getBaseIPAddr());}
 	protected void initializeMenu()
 	{
@@ -2316,12 +2373,20 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	}
 	public void addGeneratedRoute(String ip, int mask, int nhp, ONL.IPAddress nhip)
 	{
-		Hardware.Port tmp_port;
-		HWRouteTable rt = null;
-		for (int i = 0; i < numPorts; ++i)
+		HWRouteTable rt = (HWRouteTable)getTableByType(ONLComponent.RTABLE);
+		if (rt != null) 
 		{
-			tmp_port = (Hardware.Port)ports.elementAt(i);
-			tmp_port.addGeneratedRoute(ip, mask, nhp, nhip);
+			ExpCoordinator.print(new String("Hardware(" + getLabel() + ").addRoute " + ip + "/" + mask + " " + nhp + ":" + nhip.toString()), Topology.TEST_DEFRTS);
+			rt.addGeneratedRoute(ip, mask, nhp, nhip);
+		}
+		else
+		{
+			Hardware.Port tmp_port;
+			for (int i = 0; i < numPorts; ++i)
+			{
+				tmp_port = (Hardware.Port)ports.elementAt(i);
+				tmp_port.addGeneratedRoute(ip, mask, nhp, nhip);
+			}
 		}
 	}
 	/*
@@ -2359,6 +2424,12 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	{
 		Hardware.Port tmp_port;
 		ExpCoordinator.print(new String("Hardware(" + getLabel() + ").removeGeneratedRoutes"), TEST_SUBNET);
+		HWRouteTable rt = (HWRouteTable)getTableByType(ONLComponent.RTABLE);
+		if (rt != null) 
+		{
+			ExpCoordinator.print(new String("Hardware(" + getLabel() + ").removeGeneratedRoutes removing from main table"), TEST_SUBNET);
+			rt.removeGeneratedElements();
+		}
 		for (int i = 0; i < numPorts; ++i)
 		{
 			tmp_port = (Hardware.Port)ports.elementAt(i);
@@ -2515,7 +2586,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			{
 				if (hardware != null)
 				{
-					returnIndex = hardware.getReturnIndex();
+					returnIndex = hardware.getReference();//ReturnIndex();
 				}
 				else returnIndex = 0;
 				//returnMarker.setIndex(returnIndex);
@@ -2623,7 +2694,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	}
 
 
-	public static class NCCP_MonitorResponse extends NSPMonClasses.NCCP_LTDataResponse
+	public static class NCCP_MonitorResponse extends NCCP.LTDataResponse
 	{
 		private String statusMsg = null;
 		private double otimeInterval = 1;
@@ -2716,7 +2787,108 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 				return rtn;
 			}
 		}
-	}
+	}		
+	
+	//////////////////////////////////// Hardware.BatchCommandHandler ////////////////////////////
+	protected static class BatchCommandHandler extends DefaultHandler
+	{
+		protected ExperimentXML expXML = null;
+		protected String currentElement = "";
+		private ONLComponent bComponent = null;
+		private Command bCommand = null;
+		private HWTableElement tableElement = null;
+		private HWTableElement.TContentHandler telemHandler = null;
+
+		//////////////////////////////////////////// Hardware.BatchCommandHandler.ComponentHandler ////////////////////////////////////////////////////////
+		private class ComponentHandler extends ONLComponent.XMLComponentHandler
+		{
+			public ComponentHandler(String uri, Attributes attributes, ExperimentXML exp_xml)
+			{
+				super(uri,attributes,exp_xml);
+			}
+
+			public void endElement(String uri, String localName, String qName)
+			{
+				if (localName.equals(ExperimentXML.COMPONENT))
+				{
+					ExpCoordinator.print(new String("Hardward.BatchCommandHandler.ComponentHandler.endElement " + localName + "  component " + getComponent().getLabel()), ExperimentXML.TEST_XML);
+					expXML.removeContentHandler(this);
+					bComponent = getComponent();
+				}
+			}
+		}// end class Hardware.BatchCommandHandler.ComponentHandler
+
+		public BatchCommandHandler(ExperimentXML exp_xml)
+		{
+			super();
+			expXML = exp_xml;
+		}
+		public void startElement(String uri, String localName, String qName, Attributes attributes) 
+		{	  
+			currentElement = new String(localName);
+			ExpCoordinator.print(new String("Hardware.BatchCommandHandler.startElement " + localName), ExperimentXML.TEST_XML);
+			if (localName.equals(ExperimentXML.COMPONENT)) expXML.setContentHandler(new ComponentHandler(uri, attributes, expXML));
+			if (localName.equals(MDataType.TABLE_ELEM))
+			{
+				ONLComponent onlc = bComponent;
+				if (onlc != null && onlc instanceof HWTable)
+				{
+					tableElement = ((HWTable)onlc).createNewElement();//want to get existing element if it is there
+					if (attributes.getValue(HWTableElement.GENERATED) != null) tableElement.setGenerated(attributes.getValue(HWTableElement.GENERATED));
+					if (attributes.getValue(HWTableElement.HOST_GENERATED) != null) tableElement.setHostGenerated(attributes.getValue(HWTableElement.HOST_GENERATED));
+					telemHandler = (HWTableElement.TContentHandler)tableElement.getContentHandler(expXML);
+					telemHandler.setAdd(true);//false);
+					expXML.setContentHandler(telemHandler);
+				}
+			}
+			if (localName.equals(ExperimentXML.COMMAND))
+			{
+				
+				ONLComponent onlc = bComponent;
+				if (onlc != null)
+				{
+					int opcode = Integer.parseInt(attributes.getValue(ExperimentXML.OPCODE));
+					Command cmd = null;
+					if (onlc instanceof Hardware) cmd = ((Hardware)onlc).getCommand(opcode, false);
+					if (onlc instanceof Hardware.Port) cmd = ((Hardware.Port)onlc).getCommand(opcode, false);
+					if (onlc instanceof HWTable)
+					{
+						if (tableElement == null)  cmd = ((HWTable)onlc).getCommand(opcode);
+						else
+						{
+							if (!telemHandler.isAdded()) tableElement = (HWTableElement)((HWTable)onlc).getElement(tableElement);
+							cmd = ((HWTableElement)((HWTable)onlc).getElement(tableElement)).getCommand(opcode);
+						}
+					}
+					if (cmd != null)
+					{
+						cmd.print(TEST_BATCHING);
+						cmd = cmd.getCopy(onlc);
+						bCommand = cmd;
+						expXML.setContentHandler(bCommand.getContentHandler(expXML));
+					}
+					else
+					{
+						ExpCoordinator.print("Hardware.BatchCommandHandler.startElement command(" + opcode + ") is null");
+					}
+				}
+			}
+		}
+		public void setCurrentElement(String s) { currentElement = new String(s);}
+		public String getCurrentElement() { return currentElement;}
+		public void endElement(String uri, String localName, String qName)
+		{
+			ExpCoordinator.print(new String("Hardware.BatchCommandHandler.endElement " + localName), ExperimentXML.TEST_XML);
+			if (localName.equals(ExperimentXML.BATCH_COMMAND)) 
+			{
+				bCommand.print(ExperimentXML.TEST_XML);
+				expXML.removeContentHandler(this);
+				Command.CAction caction = new Command.CAction(bComponent, bCommand);
+				caction.addOperation();
+			}
+		}
+	}//end class Hardware.BatchCommandHandler
+
 	//////////////////////////////////////////////////// Hardware.MDataType  /////////////////////////////////////////////////////////////////////////
 
 	public static class MDataType extends MonitorDataType.Base
@@ -3099,7 +3271,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 					{
 						//System.out.println("  calling monitor");
 						if (!monitor.isStarted()) monitor.start();
-						monitor.setData(r.getData(monitor.getDataType()), ((NSPMonClasses.NCCP_LTDataResponse)r).getTimeInterval());
+						monitor.setData(r.getData(monitor.getDataType()), ((NCCP.LTDataResponse)r).getTimeInterval());
 					}
 				}
 			}

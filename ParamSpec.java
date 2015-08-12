@@ -239,7 +239,8 @@ public class ParamSpec
 	{
 		this(p.label, p.type);
 		setDefaultValue(p.defaultValue);
-		editable = p.isEditable();
+	    if (isPassword()) editable = false;
+	    else editable = p.isEditable();
 		commandSpec = p.commandSpec;
 		if (p.choices != null) 
 		{
@@ -270,6 +271,7 @@ public class ParamSpec
 	public boolean isNextHop() { return (type.equalsIgnoreCase(CommandSpec.NEXTHOP_STR) || type.equalsIgnoreCase(CommandSpec.NEXTHOPIP_STR));}
 	public boolean isNextHopIP() { return (type.equalsIgnoreCase(CommandSpec.NEXTHOPIP_STR));}
 	public boolean isField() { return (type.equalsIgnoreCase(CommandSpec.FIELD_STR));}
+	public boolean isPassword() { return (type.equalsIgnoreCase(CommandSpec.GENERATEDPW_STR));}
 	public String getLabel() { return label;}
 	public String getType() { return type;}
 	public void addChoice(String s)
@@ -302,6 +304,7 @@ public class ParamSpec
 			//String val = s.replaceAll(",","");
 			return (new Integer(val));
 		}
+	    if (isPassword()) return (getDefaultValue());
 		if (isDouble()) return (new Double(s));
 		if (isBool())  return (new Boolean(s));
 		if (isString()) return (new String(s));
@@ -319,7 +322,11 @@ public class ParamSpec
 	}
 	public void setDefaultValue(Object o)
 	{
-		if (o != null) ExpCoordinator.print(new String("ParamSpec(" + label + ":" + type + ").setDefaultValue " + o.toString()), Param.TEST_SETVALUE);
+		String old_val = "null";
+		String new_val = "null";
+	    if (defaultValue != null) old_val = defaultValue.toString();
+		if (o != null) new_val = o.toString();
+		ExpCoordinator.print(new String("ParamSpec(" + label + ":" + type + ").setDefaultValue to:" + new_val + " from:" + old_val), Param.TEST_SETVALUE);
 		if (isInt())
 		{
 			if (o instanceof Integer) defaultValue = new Integer((Integer)o);
@@ -334,6 +341,7 @@ public class ParamSpec
 		}
 		if (isBool() && o instanceof Boolean) defaultValue = new Boolean((Boolean)o);
 		if (isString() && o instanceof String) defaultValue = new String((String)o);
+		if (isPassword()) setDefaultValue();
 		
 		if (isIPAddr() && o instanceof ONL.IPAddress) defaultValue = new ONL.IPAddress((ONL.IPAddress)o);  
 		if (isNextHop() && !isNextHopIP() && o instanceof NextHop) 
@@ -355,11 +363,25 @@ public class ParamSpec
 		if (isDouble()) setDefaultValue(new Double(0));
 		if (isBool()) setDefaultValue(new Boolean(false));
 		if (isString()) setDefaultValue("");
+		if (isPassword())
+		{
+			if (ExpCoordinator.theCoordinator.getCurrentExp() != null)
+			{
+			    defaultValue = new String(ExpCoordinator.theCoordinator.getCurrentExp().getGeneratedPW());
+			}
+			else defaultValue = new String("");
+		}
 		if (isIPAddr()) setDefaultValue(new ONL.IPAddress());
 		if (isNextHop() && !isNextHopIP()) setDefaultValue(new NextHop());
 		if (isNextHopIP()) setDefaultValue(new NextHopIP());
+		ExpCoordinator.print(new String("ParamSpec(" + label + ").setDefaultValue()"), TEST_PARAM);
 	}
-	public Object getDefaultValue() { return defaultValue;}
+	public Object getDefaultValue() 
+	{ 
+		if (isPassword() && ExpCoordinator.theCoordinator.getCurrentExp() != null) 
+			return (ExpCoordinator.theCoordinator.getCurrentExp().getGeneratedPW());
+		else return defaultValue;
+	}
 	public String toString()
 	{
 		String rtn = new String(label + "  " + type);

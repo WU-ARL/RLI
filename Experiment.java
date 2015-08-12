@@ -32,6 +32,7 @@
  *
  */
 import javax.swing.*;
+
 import java.util.*;
 import java.io.*;
 import java.awt.event.*;
@@ -86,9 +87,14 @@ public class Experiment //implements MenuFileAction.Saveable
 	protected static final String CLUSTERS_TOK = "CLUSTERS";
 	protected static final String NUM_CLUSTERS = "num_clusters";
 	protected static final String END_TOK = "END";
+	protected static final String GENERATEDPW_TOK = ExperimentXML.GENERATED_PW;
+	protected static final String SAVE_PW_TOK = "save_pw";
 	//create save and save as actions
 	//private String[] description = null; //later
 	private File file = null;
+	private XMLStreamWriter batchWriter = null; 
+	//private JDialog pwdialog;
+	private JLabel pwdTextField = null;
 	protected ExpCoordinator expCoordinator = null;
 
 	private Observer observer = null;
@@ -117,15 +123,25 @@ public class Experiment //implements MenuFileAction.Saveable
 	private Vector eventListeners = null;
 	private int nextRefNum = 1;
 
-	////////////////////////////////////////////////PropertyListener/////////////////////////////////////////////////////////////////////
-	//public static interface PropListener extends PropertyChangeListener
-	//{
-	//public boolean removeAtClose();
-	//public void setExperiment(Experiment e);
-	//public Experiment getExperiment();
-	//}
 
-	//////////////////////////////////////////////// Snapshot ///////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////// PWPropListener //////////////////////////////////////
+        private class PWPropListener implements PropertyChangeListener
+	{
+	    public PWPropListener() {}
+	    public void propertyChange(PropertyChangeEvent e)
+	    {
+		if (e.getPropertyName().equals(GENERATEDPW_TOK)) 
+		    {
+			if (pwdTextField != null)
+			    {
+				pwdTextField.setText(new String("password: " + e.getNewValue().toString()));
+				pwdTextField.revalidate();
+			    }
+		    }
+	    }
+	}
+
+	//////////////////////////////////////////////// Snapshot ////////////////////////////////////////////////////
 	public static class Snapshot
 	{
 		public ONLComponentList nodes = null;
@@ -145,6 +161,7 @@ public class Experiment //implements MenuFileAction.Saveable
 			monitorDisplays = new MonitorManager.Snapshot(experiment.expCoordinator.getMonitorManager());
 		}
 	}
+	
 	//////////////////////////////////////////////// Event //////////////////////////////////////////////////////////////////////////////
 	public static class Event extends EventObject
 	{
@@ -187,6 +204,8 @@ public class Experiment //implements MenuFileAction.Saveable
 		public RemoveEvent(ONLComponent oc, Experiment e) { super(oc, e, Experiment.Event.REMOVE);}
 		public RemoveEvent(Cluster.Instance cl, Experiment e) { super(cl, e, Experiment.Event.REMOVE);}
 	}
+	
+	
 
 	///////////////////////////////////////// Listener /////////////////////////////////////////////////////////////////////////////////
 	public static interface Listener
@@ -362,30 +381,20 @@ public class Experiment //implements MenuFileAction.Saveable
 					wrtr.writeString(((GigEDescriptor)onlComponent).getIPAddr().toString());
 					wrtr.writeInt(0);//write reboot params
 					wrtr.writeInt(0);//write init params
+					wrtr.writeInt(1);//cores
+					wrtr.writeInt(1);//memory
+					wrtr.writeInt(0);//numports
+					wrtr.writeInt(0);//interface bw
 				}
-				if (onlComponent instanceof NSPDescriptor)
+				if (onlComponent instanceof Hardware)
 				{
-					wrtr.writeString(onlComponent.getProperty(NSPDescriptor.IPBASEADDR));
-					//write reboot params
-					String tmp_str = onlComponent.getProperty(NSPDescriptor.BITFILE);
-					if (tmp_str != null)
-					{
-						wrtr.writeInt(1);
-						wrtr.writeShort(CommandSpec.STRING);
-						wrtr.writeString(tmp_str);
-					}
-					else 
-						wrtr.writeInt(0);
-					wrtr.writeInt(0);//write init params
-				}
-				else
-				{
-					if (onlComponent instanceof Hardware)
-					{
-						wrtr.writeString(onlComponent.getProperty(NSPDescriptor.IPBASEADDR));
-						((Hardware)onlComponent).writeRebootParams(wrtr);//wrtr.writeInt(0);//write reboot params
-						((Hardware)onlComponent).writeInitParams(wrtr);//wrtr.writeInt(0);//write init params
-					}
+					wrtr.writeString(onlComponent.getProperty(Hardware.IPBASEADDR));
+					((Hardware)onlComponent).writeRebootParams(wrtr);//wrtr.writeInt(0);//write reboot params
+					((Hardware)onlComponent).writeInitParams(wrtr);//wrtr.writeInt(0);//write init params
+					wrtr.writeInt(((Hardware)onlComponent).getCores());	
+					wrtr.writeInt(((Hardware)onlComponent).getMemory());
+					wrtr.writeInt(((Hardware)onlComponent).getNumPorts());
+					wrtr.writeInt(((Hardware)onlComponent).getPortBandwidth());				
 				}
 				//write cluster info if component belongs to a cluster
 				onlComponent.setCommittedLabel(label);
@@ -553,64 +562,13 @@ public class Experiment //implements MenuFileAction.Saveable
 		}
 		protected void sendUndoMessage() {}
 	}
-	/*
-  private class SaveAction extends MenuFileAction
-  {
-    private Experiment experiment = null;
-    public SaveAction(Experiment e)
-      {
-	super(e, false, null, "save", false, true);
-	experiment = e;
-	setSuffix(FILE_SUFFIX);
-      }
-    public void actionPerformed(ActionEvent e)
-      {
-	if (experiment.getFile() == null) super.actionPerformed(e);
-	else experiment.saveToFile();
-      }
-  }
-	 */
+
 	private class ReadFunction
 	{
 		public ReadFunction(){}
 		public void processString(String str, ONL.Reader reader) throws IOException {}
 	}
-	/*
-  public Experiment(ExpCoordinator ec, File f) { this(ec, f, null, true);}
-  public Experiment(ExpCoordinator ec, File f, Topology topo, Boolean lv)
-    {
-      this(ec, "", topo, lv);
-      try
-	{
-	  file = f;
-	  FileReader fr = new FileReader(f);
-	  char buf[] = new char[7];
-	  fr.read(buf, 0, 7);
-	  fr.close();
-	  String str = new String(buf);
-	  if (str.equals("VERSION"))
-	    {
-	      ONL.BaseFileReader frdr = new ONL.BaseFileReader(f);
-	      frdr.setCountAllLines(true);//blank lines mean something
-	      read(frdr);
-	    }
-	  //else
-	  //{
-	  //  XMLReader xmlReader = XMLReaderFactory.createXMLReader();
-	  //  ExperimentXML exp_xml = new ExperimentXML(this, xmlReader, f);
-	  //  xmlReader.parse(new InputSource(new FileInputStream(f)));
-	  // }
-	}
-      catch (IOException e)
-	{
-	  System.err.println("Experiment - error could not open file:" + file.getAbsolutePath() + " for reading");
-	}
-      //catch(SAXException e2)
-      //{
-      //  ExpCoordinator.print(new String("ExpXMLFileAction.loadFromFile SAXException " + e2.getMessage()));
-      //}
-    }
-	 */
+
 	public Experiment(ExpCoordinator ec, String nm) { this(ec, nm, null, true);}
 	public Experiment(ExpCoordinator ec, String nm, Topology topo, Boolean lv)
 	{
@@ -630,6 +588,9 @@ public class Experiment //implements MenuFileAction.Saveable
 		properties.setProperty(ONLComponent.STATE, ONLComponent.NOT_INIT);
 		properties.setProperty(FAILURE, false);
 		properties.setProperty(LIVE, lv);
+		setGeneratedPW(null);
+		PWPropListener pl = new PWPropListener();
+		addPropertyListener(GENERATEDPW_TOK, pl);
 	}
 	public VirtualTopology getVirtualTopology() 
 	{
@@ -657,7 +618,6 @@ public class Experiment //implements MenuFileAction.Saveable
 			}
 		}
 	}
-	//public void writeTopologySummary(ONL.Writer writer) throws java.io.IOException { topology.writeNodeSummary(writer);}
 	public void writeXML(BufferedWriter wrtr) throws java.io.IOException
 	{
 		try{
@@ -669,6 +629,7 @@ public class Experiment //implements MenuFileAction.Saveable
 			xmlWrtr.writeStartElement(ExperimentXML.EXP);
 			xmlWrtr.writeAttribute(ExperimentXML.VERSION, String.valueOf(ExpCoordinator.VERSION));
 			xmlWrtr.writeAttribute(ExperimentXML.EXPNAME, properties.getProperty(LABEL));
+			if (getPropertyBool(SAVE_PW_TOK)) xmlWrtr.writeAttribute(ExperimentXML.GENERATED_PW, getGeneratedPW());
 			if (ExpCoordinator.isOldSubnet()) xmlWrtr.writeAttribute(ExperimentXML.OLDSUBNET, String.valueOf(true));
 			//write main window xy coordinates
 			ONLMainWindow mw = expCoordinator.getMainWindow();
@@ -711,260 +672,7 @@ public class Experiment //implements MenuFileAction.Saveable
 			e.printStackTrace();
 		}
 	}
-	/*
-  public void write(ONL.Writer writer)
-    {
-      //ExpCoordinator.printer.print("Experiment.write");
-      try
-	{
-          //write version
-          if (!(writer instanceof ONL.BaseFileWriter))
-            {
-              writer.writeString(ONL.VERSION_TOK);
-              writer.writeDouble(ExpCoordinator.VERSION);
-            }
-	  //write name
-	  writer.writeString(NAME_TOK);
-	  writer.writeString(properties.getProperty(LABEL));
 
-	  //write topology
-	  writer.writeString(TOPOLOGY_TOK);      
-	  writer.writeString(CLUSTERS_TOK);  
-	  writeClusters(topology.getClusters(), writer);
-	  writer.writeString(END_TOK); //end nodes       
-	  writer.writeString(NODES_TOK); 
-	  writeComponentList(topology.getNodes(), writer);
-	  writer.writeString(END_TOK); //end nodes     
-	  writer.writeString(LINKS_TOK); 
-	  writeComponentList(topology.getLinks(), writer);       
-	  writer.writeString(END_TOK);   //end links   
-	  writer.writeString(DISPLAY_TOK);
-          ONLMainWindow mw = expCoordinator.getMainWindow();
-          writer.writeString(new String(mw.getX() + " " + mw.getY() + " " + mw.getWidth() + " " + mw.getHeight()));
-	  writeDisplays(topology.getNodes(), writer);
-	  writer.writeString(END_TOK);   //end display
-	  writer.writeString(END_TOK); //end topology
-	  writer.writeString(PARAMS_TOK);
-	  writeComponentList(params, writer);   
-	  writer.writeString(END_TOK); //end params
-          writer.writeString(MONITOR_TOK);
-          //expCoordinator.getMonitorManager().saveToFile(writer); //write monitoring stuff
-          expCoordinator.getMonitorManager().write(writer); //write monitoring stuff
-	  writer.finish();
-	}
-      catch (IOException e)
-	{
-	  System.err.println("Experiment::write - error writing");
-	}
-
-    }
-  public void read(ONL.Reader rdr) { read(rdr,false);}
-  public void read(ONL.Reader rdr, boolean skipMon)
-    {
-      //Experiment.Reader reader = new Experiment.Reader(rdr);
-      ONL.Reader reader = rdr;
-      try
-	{
-	  if (!readName(reader)) return;
-	  if (!readTo(reader, TOPOLOGY_TOK)) return;
-	  if (rdr.getVersion() > 3.0)
-	    {
-	      //read clusters
-	      if (!read(reader, 
-			(new ReadFunction() 
-			{
-			  public void processString(String str, ONL.Reader reader) throws IOException
-			  {
-			    readClusters(str, reader);
-			  }
-			}),
-			CLUSTERS_TOK)) return;
-	    }
-	  //read nodes
-	  if (!read(reader, 
-		    (new ReadFunction() 
-		    {
-		      public void processString(String str, ONL.Reader reader) throws IOException
-		      {
-			readComponent(str, reader);
-		      }
-		    }),
-		    NODES_TOK)) return;
-
-	  //read links
-	  if (!read(reader, 
-		    (new ReadFunction() 
-		    {
-		      public void processString(String str, ONL.Reader reader) throws IOException
-		      {	
-			readLink(str, reader);
-		      }
-		    }),
-		    LINKS_TOK)) return;
-	  topology.fillClusters(this);
-	  //read displays
-	  if (!read(reader, 
-		    (new ReadFunction() 
-		    {
-		      private boolean location_set = false;
-		       public void processString(String str, ONL.Reader reader) throws IOException
-		       {
-			 String[] strarray;
-			 int a_len = 0;
-			 if (!location_set && reader.getVersion() >= 1.3)
-			   {
-			     strarray = str.split(" ");//reader.readString().split(" ");
-			     a_len = Array.getLength(strarray);
-			     if (a_len >= 4)
-                                 {
-                                   ONLMainWindow mw = expCoordinator.getMainWindow();
-                                   expCoordinator.setWindowBounds(mw,
-                                                                  Integer.parseInt(strarray[0]), 
-                                                                  Integer.parseInt(strarray[1]),
-                                                                  Integer.parseInt(strarray[2]),
-                                                                  Integer.parseInt(strarray[3]));
-                                 }
-			     location_set = true;
-			     return;
-                             }
-
-			 readComponentLocation(str, reader);
-		       }
-		    }),
-		    DISPLAY_TOK)) return; 
-	  //read params - route & filter tables
-	  if (!readTo(reader, END_TOK)) return; //end topology
-	  if (!read(reader, 
-		    (new ReadFunction() 
-		     {
-		       public void processString(String str, ONL.Reader reader) throws IOException
-			 {
-                           readParam(str,reader);
-                         }
-                      }),
-                    PARAMS_TOK)) return;
-	  //if (!readTo(reader, END_TOK)) return;
-          if (!skipMon)
-            {
-              if (readTo(reader, MONITOR_TOK))
-                {
-                  //reader.setCountAllLines(true);
-                  expCoordinator.getMonitorManager().loadFromReader(reader);
-                }
-            }
-          if (reader.getVersion() != ExpCoordinator.VERSION)
-            {
-              String v_string = "older";
-              if (reader.getVersion() > ExpCoordinator.VERSION) v_string = "newer";
-              expCoordinator.addError(new StatusDisplay.Error(new String("Your Experiment was successfully loaded.\n However, experiment file was saved with a " + v_string + " RLI version.\n Please resave the experiment. \n"),
-                                                              "Version Inconsistency.",
-                                                              "Version Inconsistency.",
-                                                              StatusDisplay.Error.POPUP | StatusDisplay.Error.LOG));     
-            }
-	}
-      catch (IOException e)
-	{
-	  System.err.println("Experiment::read - error reading");
-          String error_msg = "Your Experiment failed to load.\n ";
-          if (reader.getVersion() != ExpCoordinator.VERSION)
-            {
-              String v_string = "older";
-              if (reader.getVersion() > ExpCoordinator.VERSION) v_string = "newer";
-              error_msg = error_msg.concat(new String("Experiment file was saved with a " + v_string + " RLI version.\n Please resave the experiment. \n"));
-            }
-          expCoordinator.addError(new StatusDisplay.Error(error_msg,
-                                                          "Experiment load error.",
-                                                          "Experiment load error.",
-                                                          StatusDisplay.Error.POPUP | StatusDisplay.Error.LOG));  
-          expCoordinator.closeCurrentExp();
-	}
-    }
-  private boolean readTo(ONL.Reader reader, String token) throws IOException
-    {
-      while (reader.ready())
-	{	
-	  if (reader.readString().equals(token)) return true;
-	}
-      return false;
-    }
-  private boolean read(ONL.Reader reader, ReadFunction rfunction, String token) throws IOException
-    {
-      String str;
-      boolean found_start = false;
-      boolean found_end = false;
-      ExpCoordinator.printer.print(new String("Experiment::read token: " + token), 1);
-      while (reader.ready())
-	{	
-	  str = reader.readString();
-          ExpCoordinator.printer.print(new String("                 string: " + str), 1);
-	  if (str.equals(token)) 
-	      {
-		  ExpCoordinator.printer.print(new String("                 found start"), 1);
-		  found_start = true;
-	      }
-	  else
-	    {
-	      if (str.equals(END_TOK)) 
-                {
-                  found_end = true;
-                  break;
-                }
-	      else
-		{
-		  if (found_start)
-		    {
-		      rfunction.processString(str, reader);
-		    }
-		}
-	    }
-	}
-      if (found_start && found_end) return true;
-      else 
-	{
-	  System.err.println("Experiment::read " + token + " error - not correct format");
-	  return false;
-	}
-    }
-
-  private boolean readName(ONL.Reader reader) throws IOException
-    {
-      //read and set name
-      boolean version_found = false;
-      if (reader instanceof ONL.BaseFileReader) version_found = true; //this cl
-      while (reader.ready())
-	{
-          String ln = reader.readString();
-          ExpCoordinator.print(new String("Experiment.readName: " + ln), 2);
-	  if (ln.equals(ONL.VERSION_TOK)) 
-	   {
-             reader.setVersion(reader.readDouble());
-	     version_found = true;
-	   }
-	 if (ln.equals(NAME_TOK)) 
-	   {
-	     properties.setProperty(LABEL, reader.readString());
-             if (!version_found) reader.setVersion(0);
-	     return true;
-	   }
-	}
-      System.err.println("Experiment::readName error - not correct format");
-      return false;
-    }
-
-  protected void readClusters(String str, ONL.Reader reader) throws IOException
-    { 
-      ExpCoordinator.print(new String("Experiment.readCluster " + str), 2);
-      if (str.startsWith(NUM_CLUSTERS))
-       {
-	 String strarray[] = str.split(" ");
-	 int num_clusters = Integer.parseInt(strarray[1]);
-	 for (int i = 0; i < num_clusters; ++i)
-	  {
-	    Cluster.Instance cli = new Cluster.Instance(reader, this);
-	  }
-       }
-    }
-	 */
 	protected ONLComponent readComponent(String str, ONL.Reader reader) throws IOException
 	{ 
 		ExpCoordinator.print(new String("Experiment.readComponent " + str), 2);
@@ -972,20 +680,15 @@ public class Experiment //implements MenuFileAction.Saveable
 		String type = strarray[1];
 		ONLComponent c = null;
 		//Hardware hw ;
-		if (type.equals(ONLComponent.NSP_LBL))
-			c = new NSPDescriptor(strarray[0], reader, expCoordinator);
+		if (type.equals(ONLComponent.VGIGE_LBL))
+		    c = new GigEDescriptor(strarray[0], type, reader, expCoordinator);
 		else
-		{
-			if (type.equals(ONLComponent.VGIGE_LBL))
-				c = new GigEDescriptor(strarray[0], type, reader, expCoordinator);
-			else
-			{
-				c = new Hardware(strarray[0], reader, expCoordinator);
-				if (((Hardware)c).getHWSubtype() != null)
-					((Hardware)c).initializePorts();
-				else c = null;
-			}
-		}
+		    {
+			c = new Hardware(strarray[0], reader, expCoordinator);
+			if (((Hardware)c).getHWSubtype() != null)
+			    ((Hardware)c).initializePorts();
+			else c = null;
+		    }
 		if (c != null) 
 		{
 			//c = topology.addExpComponent(c);
@@ -1021,57 +724,7 @@ public class Experiment //implements MenuFileAction.Saveable
 		ONLComponent param = null;
 		boolean in;
 		if (c == null) return null;
-		if (c instanceof NSPPort)
-		{
-			if (type.equals(ONLComponent.RTABLE))
-			{
-				if (c != null)
-				{
-					param = ((RouterPort)c).getTableByType(ONLComponent.RTABLE);
-					if (param != null) ((RouteTable)param).read(reader);
-				}
-				else RouteTable.skip(reader);
-			}
-			if (type.equals(ONLComponent.IPPEMFTABLE) ||
-					type.equals(ONLComponent.IPPGMFTABLE) ||
-					type.equals(ONLComponent.IPPEXGMFTABLE) ||
-					type.equals(ONLComponent.OPPEMFTABLE) ||
-					type.equals(ONLComponent.OPPGMFTABLE) ||
-					type.equals(ONLComponent.OPPEXGMFTABLE))
-			{
-				if (c != null)
-				{
-					in = Boolean.valueOf(reader.readString()).booleanValue();
-					param = ((NSPPort)c).getFilterTable(type);
-					((FilterTable)param).read(reader);
-				}
-			}
-			else FilterTable.skip(reader);
-			if (type.equals(ONLComponent.IPPQTABLE) ||
-					type.equals(ONLComponent.OPPQTABLE))
-			{
-				in = Boolean.valueOf(reader.readString()).booleanValue();
-				param = ((NSPPort)c).getQueueTable(type);
-				((QueueTable)param).read(reader);
-			}
-			if (type.equals(ONLComponent.PINSTANCES))
-			{
-				param = ((NSPPort)c).getPInstanceTable();
-				((PluginInstanceTable)param).read(reader);
-			}
-			else
-			{
-				param = ((Hardware)c).getTableByType(type);
-				((ONLCTable)param).read(reader);
-			}
-		}
-		if (c instanceof NSPDescriptor && type.equals(ONLComponent.PCLASSES))
-		{
-			param = ((NSPDescriptor)c).getPluginClasses();
-			//else
-				// param = ((NPRouter.Instance)c).getPluginClasses();
-			((PluginClasses)param).read(reader);
-		}
+	
 		//PROBLEM:need to handle HARDWARE
 
 		if (param != null && !containsParam((ONLComponent)param)) addParam((ONLComponent)param);
@@ -1098,54 +751,6 @@ public class Experiment //implements MenuFileAction.Saveable
 			}
 		}
 	}
-	/*
-  protected static void writeDisplays(ONLComponentList l, ONL.Writer writer) throws IOException
-    {
-      int max = l.size();
-      ONLComponent elem;
-      ONLGraphic elem_graph = null;
-      for (int i = 0; i < max; ++i)
-	{
-	  elem = l.onlComponentAt(i);
-	  elem_graph = elem.getGraphic();
-	  if (elem_graph != null)
-	    {
-	      writer.writeString(elem.toString());
-	      if (!(elem instanceof Hardware)) writer.writeString(new String(elem_graph.getX() + " " + elem_graph.getY()));
-              else
-                {
-                  int spinner = ((HardwareGraphic)elem_graph).getSpinnerPosition();
-                  writer.writeString(new String(elem_graph.getX() + " " + elem_graph.getY() + " " + spinner));
-                }
-	    }
-	}
-    }
-
-  private void writeClusters(Vector l, ONL.Writer writer) throws IOException
-    {
-      int max = l.size();
-      Cluster.Instance elem;
-      writer.writeString(new String(NUM_CLUSTERS + " " + max));
-      for (int i = 0; i < max; ++i)
-       {
-	 elem = (Cluster.Instance)l.elementAt(i);
-	 elem.writeExpDescription(writer);
-       }
-    }
-
-  private void writeComponentList(ONLComponentList l, ONL.Writer writer) throws IOException
-    {
-      int max = l.size();
-      ONLComponent elem;
-      for (int i = 0; i < max; ++i)
-	{
-	  elem = l.onlComponentAt(i);
-	  ExpCoordinator.print(new String("Experiment.writeComponentList writing component:" + elem.getLabel()), 6);
-	  elem.writeExpDescription(writer);
-	}
-    }
-
-	 */
 	public void setLabel(String nm) { properties.setProperty(LABEL, nm);}
 	public String getLabel() { return (properties.getProperty(LABEL));}
 	public String getProperty(String nm) {  return (properties.getProperty(nm));}
@@ -1167,6 +772,85 @@ public class Experiment //implements MenuFileAction.Saveable
 		file = f;
 	}
 	public File getFile() { return file;} 
+	public void setBatchWriter(BufferedWriter wrtr) throws java.io.IOException
+	{	
+		try
+		{
+		    if (batchWriter != null)
+			{
+			    //finish batch writing;
+			    batchWriter.writeEndElement();//Batch
+			    batchWriter.writeEndDocument();
+			    batchWriter.close();
+			}
+		    if (wrtr != null)
+		    {
+		    	batchWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(wrtr);
+		    	batchWriter.setDefaultNamespace("onl");
+		    	batchWriter.setPrefix("onl", "onl");
+		    	batchWriter.writeStartDocument();
+		    	batchWriter.writeStartElement(ExperimentXML.BATCH);
+		    }
+		    else batchWriter = null;
+		}
+		catch(XMLStreamException e)
+		{
+			ExpCoordinator.print(new String("Experiment.setBatchWriter XMLStreamException " + e.getMessage()));
+			e.printStackTrace();
+		}
+	}
+	public XMLStreamWriter getBatchWriter() { return batchWriter;}
+	public String getGeneratedPW() { return (getProperty(GENERATEDPW_TOK));}
+	public void setGeneratedPW(String s) 
+	{
+		//set only if not committed
+		if (!isActive()) 
+		{
+		    if (s == null)
+			{
+			    properties.setProperty(SAVE_PW_TOK, false);
+			    //generate random password for experiment currently used for vms
+			    Random random = new Random();
+			    char[] word = new char[5]; 
+			    word[0] = (char)('a' + random.nextInt(26));
+			    while (word[0] == 'p')
+				{
+				    word[0] = (char)('a' + random.nextInt(26));
+				}
+			    for(int j = 1; j < word.length; j++)
+				{
+				    word[j] = (char)('a' + random.nextInt(26));
+				}
+			    setProperty(GENERATEDPW_TOK, new String(word));
+			    ExpCoordinator.print("Experiment.setGeneratedPW " + new String(word));
+			}
+		    else
+			{
+			    setProperty(GENERATEDPW_TOK, s);
+			    setProperty(SAVE_PW_TOK, true);
+			    ExpCoordinator.print("Experiment.setGeneratedPW " + s);
+			}
+		}
+		else
+		    ExpCoordinator.print("Experiment.setGeneratedPW " + s + " failed comp was active");
+	}
+	public void showGeneratedPW()
+	{
+		if (pwdTextField == null)
+		{
+			//pwdialog = new JDialog(ExpCoordinator.getMainWindow(), "Experiment Password");
+			//pwdialog.setSize(100, 120);	
+			//pwdialog.setFocusableWindowState(false);
+
+			pwdTextField = new JLabel(new String("password: " + getGeneratedPW()));//TextField(50);
+			pwdTextField.setHorizontalAlignment(SwingConstants.RIGHT);
+			pwdTextField.setText(new String("password: " + getGeneratedPW()));
+			//pwdialog.getContentPane().add(tf);
+			ExpCoordinator.getMainWindow().getJMenuBar().add(pwdTextField);
+		}
+		ExpCoordinator.getMainWindow().getJMenuBar().revalidate();
+		//if (!pwdialog.isVisible()) pwdialog.setVisible(true);
+	}
 
 	public void addComponent(ONLComponent c) { addComponent(c, null);}
 	public void addComponent(ONLComponent c, Vector descendants) 
@@ -1408,6 +1092,14 @@ public class Experiment //implements MenuFileAction.Saveable
 
 	public void close()
 	{
+		//if (pwdialog != null && pwdialog.isVisible()) pwdialog.setVisible(false);
+		//ExpCoordinator.print(new String("closing experiment " + getID()));
+		if (pwdTextField != null) 
+			{
+				ExpCoordinator.getMainWindow().getJMenuBar().remove(pwdTextField);
+				ExpCoordinator.getMainWindow().getJMenuBar().validate();
+				ExpCoordinator.getMainWindow().getJMenuBar().repaint();
+			}
 		//clear virtual topology
 		if (vtopology != null) vtopology.clear();
 		//remove from main window save action save action
@@ -1457,15 +1149,6 @@ public class Experiment //implements MenuFileAction.Saveable
 		int max = nodes.size();
 		int i = 0;
 		ONLComponent elem = null;
-		for (i = 0; i < max; ++i)
-		{
-			elem = nodes.onlComponentAt(i);
-			if (elem instanceof NSPDescriptor && elem.isFailed())
-			{
-				fedits.add(new AddNodeEdit(elem, this));
-				elem.setState( ONLComponent.WAITING);
-			}
-		}
 		//now do the hosts
 		for (i = 0; i < max; ++i)
 		{

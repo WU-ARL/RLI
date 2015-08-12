@@ -44,15 +44,10 @@ import org.xml.sax.*;
 
 public class GigEDescriptor extends ONLComponent
 {
-	//public static final String NSP = "nsplabel";
-	//public static final String NSPPORT = "nspport";
 	public static final int TEST_GRAPHIC = 5;
-	//public static final int TEST_10G = 4;
 	public static final String NSPINDEX = "nspindex";
 	protected Graphic graphic = null;
-	//private Port[] ports = null;
 	private Vector ports = null;
-	//private int numPorts = 0;
 	protected static final String portLabels = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	protected static class ButtonAction extends ONLGraphic.ButtonListener
@@ -286,6 +281,7 @@ public class GigEDescriptor extends ONLComponent
 	{
 		super(lbl, tp, tr, onlcd);
 		//numPorts = tr.readInt();
+		setInterfaceType(ExperimentXML.ITYPE_1G);
 		initializePorts();
 		setComponentType(ExperimentXML.SWITCH);
 	}
@@ -293,6 +289,7 @@ public class GigEDescriptor extends ONLComponent
 	{
 		super(lbl, ONLComponent.VGIGE_LBL, ec);
 		//numPorts = n_ports;
+		setInterfaceType(ExperimentXML.ITYPE_1G);
 		initializePorts();
 		setComponentType(ExperimentXML.SWITCH);
 	}
@@ -300,7 +297,8 @@ public class GigEDescriptor extends ONLComponent
 	{
 		super(uri, attributes);
 		//numPorts = Integer.parseInt(attributes.getValue(uri, "numPorts"));
-		setInterfaceType(attributes.getValue(uri, ExperimentXML.INTERFACE_TYPE));
+		setInterfaceType(ExperimentXML.ITYPE_1G);
+		//setInterfaceType(attributes.getValue(uri, ExperimentXML.INTERFACE_TYPE));
 		if (attributes.getValue(ExperimentXML.ORIG_SUBNET) != null)
 		{
 			try

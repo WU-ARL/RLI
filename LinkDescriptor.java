@@ -142,6 +142,7 @@ public class LinkDescriptor extends ONLComponent
 				if (p.getNHIPAddr() != null)
 					NCCP.writeString(p.getNHIPAddr().toString(), dout);
 				else NCCP.writeString("0.0.0.0", dout);
+				dout.writeInt(p.getBandwidth());
 			}
 			//NCCP.writeString(p.getIPAddrString(), dout);
 			p = (ONLComponent.PortBase)link.getPoint2(); 
@@ -158,6 +159,7 @@ public class LinkDescriptor extends ONLComponent
 				if (p.getNHIPAddr() != null)
 					NCCP.writeString(p.getNHIPAddr().toString(), dout);
 				else NCCP.writeString("0.0.0.0", dout);
+				dout.writeInt(p.getBandwidth());
 			}
 			//NCCP.writeString(p.getIPAddrString(), dout);
 			dout.writeInt((int)link.getBandwidth());

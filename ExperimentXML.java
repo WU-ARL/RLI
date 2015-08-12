@@ -33,6 +33,8 @@ public class ExperimentXML extends DefaultHandler
 	public static final String ASSIGNER = "assigner";
 	public static final String AUX = "aux";
 	public static final String BANDWIDTH = "bandwidth";
+	public static final String BATCH_COMMAND = "batchCommand";
+	public static final String BATCH = "batch";
 	public static final String BINDING = "binding";
 	public static final String BINDINGS = "bindings";
 	public static final String CLASSID = "classID";
@@ -49,6 +51,7 @@ public class ExperimentXML extends DefaultHandler
 	public static final String COMMANDTYPE = "commandType";
 	public static final String COMPONENT = "component";
 	public static final String CONFIGURE = "configure";
+	public static final String CORES = "cores";
 	public static final String COUNTER = "counter";
 	public static final String CPADDR = "cpaddr";
 	public static final String CPPORT = "cpport";
@@ -86,6 +89,7 @@ public class ExperimentXML extends DefaultHandler
 	public static final String FORMULA = "formula";
 	public static final String FORWARD_KEY = "forwardKey";
 	public static final String GATEWAY = "gatewayaddr";
+	public static final String GENERATED_PW = "generatedPW";
 	public static final String GROUP = "group";
 	public static final String HARDWARE = "hardware";//ExperimentXML.HWTYPE;
 	public static final String HEIGHT = "height";
@@ -117,6 +121,7 @@ public class ExperimentXML extends DefaultHandler
 	public static final String MAX = "max";
 	public static final String MBITS = "Mbits";
 	public static final String MBYTES = "Mbytes";
+	public static final String MEMORY = "memory";
 	public static final String MENUOP = "menuOperation";
 	public static final String MICRO_ENG = "microengine";
 	public static final String MIN = "min";
@@ -131,6 +136,7 @@ public class ExperimentXML extends DefaultHandler
 	public static final String NEGATIVE_POSSIBLE = "negative_possible";
 	public static final String NEWLINE = "newline";
 	public static final String NEXTHOP = "nextHop";
+	public static final String NO_UPDATE = "no_update";
 	public static final String NODE = "node";
 	public static final String NODES = "nodes";
 	public static final String NUMCOLS = "numColumns";
@@ -179,7 +185,6 @@ public class ExperimentXML extends DefaultHandler
 	public static final String QUANTUM = "quantum";
 	public static final String QUEUE = "queue";
 	public static final String QUEUE_TABLE = "queueTable";
-	public static final String NSPQUEUE_TABLE = "QueueTable";
 	public static final String QID = "queueID";
 	public static final String RATE = "rate";
 	public static final String REBOOT = "reboot";
@@ -301,6 +306,7 @@ public class ExperimentXML extends DefaultHandler
 				version = Double.parseDouble(attributes.getValue("version"));
 				if (version < 6.5) ExpCoordinator.setOldSubnet(true);
 				if (attributes.getValue(OLDSUBNET) != null) ExpCoordinator.setOldSubnet(true);
+				if (attributes.getValue(GENERATED_PW) != null) experiment.setGeneratedPW(attributes.getValue(GENERATED_PW));
 				currentElement = new String(localName);		      
 			}
 			else ExpCoordinator.print(new String("ExperimentXML.startElement " + localName), TEST_XML);
@@ -342,6 +348,12 @@ public class ExperimentXML extends DefaultHandler
 			currentElement = new String(localName);	
 			setContentHandler(ExpCoordinator.theCoordinator.getMonitorManager().getContentHandler(this));
 		}
+		if (localName.equals(BATCH))
+			currentElement = new String(localName);
+		if (localName.equals(BATCH_COMMAND))
+		{
+			setContentHandler(new Hardware.BatchCommandHandler(this));
+		}
 	}
 	public void endElement(String uri, String localName, String qName)
 	{
@@ -351,6 +363,7 @@ public class ExperimentXML extends DefaultHandler
 			ExpCoordinator.print("ExperimentXML topology loaded");
 			experiment.getTopology().print(1);
 		}
+		if (localName.equals(BATCH)) ExpCoordinator.print("batch file loaded");
 	}
 
 	public void addNode(ONLComponent c) 
@@ -370,21 +383,16 @@ public class ExperimentXML extends DefaultHandler
 		//int type = Integer.parseInt(attributes.getValue(uri, TYPECODE));
 		String tp_nm = attributes.getValue(uri, TYPENAME);
 		ONLComponent c = null;
-		if (tp_nm.equals(ONLComponent.NSP_LBL))
-			c = new NSPDescriptor(uri, attributes);
+		if (tp_nm.equals(ONLComponent.VGIGE_LBL))
+		    c = new GigEDescriptor(uri, attributes);
 		else
-		{
-			if (tp_nm.equals(ONLComponent.VGIGE_LBL))
-				c = new GigEDescriptor(uri, attributes);
+		    {
+			HardwareSpec.Subtype st = HardwareSpec.manager.getSubtype(tp_nm);
+			if (st != null && st.isHost()) //PROBLEM
+			    c = new HardwareHost(uri, attributes);
 			else
-			{
-				HardwareSpec.Subtype st = HardwareSpec.manager.getSubtype(tp_nm);
-				if (st != null && st.isHost()) //PROBLEM
-					c = new HardwareHost(uri, attributes);
-				else
-					c = new Hardware(uri, attributes);
-			}
-		}
+			    c = new Hardware(uri, attributes);
+		    }
 		if (c != null) 
 		{
 			ExpCoordinator.print(new String("ExperimentXML.addNode adding contentHandler for component " + c.getType()), TEST_XML);

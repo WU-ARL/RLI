@@ -22,8 +22,8 @@ $(ACTUAL_LOCATION)/%.class: %.java
 all:	
 	$(JC) -d $(CLASS_DIR) -Xlint -g @files.list ;
 	chmod g+rw $(CLASS_DIR)/*.class ;
-	$(JAVADIR)jar cvfm RLI.jar main.manifest IXP.hw PC1core.hw PC8core.hw PC48core.hw NPR.shw HOST1core.shw HOST8core.shw HOST48core.shw -C $(CLASS_DIR) . ; 
-	$(JAVADIR)jar cvfm RLIbeta.jar beta.manifest IXP.hw PC1core.hw PC8core.hw PC48core.hw NPR.shw HOST1core.shw HOST8core.shw HOST48core.shw -C $(CLASS_DIR) . ; 
+	$(JAVADIR)jar cvfm RLI.jar main.manifest IXP.hw PC1core.hw PC2core.hw PC48core.hw NPR.shw HOST1core.shw HOST2core.shw HOST48core.shw -C $(CLASS_DIR) . ; 
+	$(JAVADIR)jar cvfm RLIbeta.jar beta.manifest IXP.hw PC1core.hw PC2core.hw PC48core.hw NPR.shw HOST1core.shw HOST2core.shw HOST48core.shw -C $(CLASS_DIR) . ; 
 	chmod g+rw *jar;
 
 pwcrypt:	

@@ -67,13 +67,13 @@ public class MenuFileAction extends ONL.UserAction //Mode.BaseAction
     private String suffix = "";
     public MFileFilter(String suf)
       {
-	this.suffix = suf;
+    	this.suffix = suf;
       }
     public boolean accept(File pathname)
       {
-	//take this out for now because rename not working
-	//return (pathname.getAbsolutePath().endsWith(suffix));
-	return true;
+    	//take this out for now because rename not working
+    	//return (pathname.getAbsolutePath().endsWith(suffix));
+    	return true;
       }
     public String getDescription() { return "All Files";}
   }
@@ -124,31 +124,31 @@ public class MenuFileAction extends ONL.UserAction //Mode.BaseAction
       fChooser.setFileFilter(fileFilter);
       //fChooser.rescanCurrentDirectory();
       if (loading)
-	{
-	  rtn = fChooser.showOpenDialog(parentComponent);
-	  if (rtn == JFileChooser.APPROVE_OPTION) control.loadFromFile(fChooser.getSelectedFile());
-	}
+      {
+    	  rtn = fChooser.showOpenDialog(parentComponent);
+    	  if (rtn == JFileChooser.APPROVE_OPTION) control.loadFromFile(fChooser.getSelectedFile());
+      }
       else
-	{
-	  rtn = fChooser.showSaveDialog(parentComponent);
-	  if (rtn == JFileChooser.APPROVE_OPTION) 
-	    {
-	      File file = fChooser.getSelectedFile();
-	      //System.out.println("MenuFileAction::actionPerformed save suffix = "  + suffix);
-	      //if (suffix.length() > 0)
-	      //{
-	      //  file.renameTo(new File(file.getAbsolutePath().concat(suffix)));
-	      //}
-	      control.saveToFile(file);
-	    }
-	}
+      {
+    	  rtn = fChooser.showSaveDialog(parentComponent);
+    	  if (rtn == JFileChooser.APPROVE_OPTION) 
+    	  {
+    		  File file = fChooser.getSelectedFile();
+    		  //System.out.println("MenuFileAction::actionPerformed save suffix = "  + suffix);
+    		  //if (suffix.length() > 0)
+    		  //{
+    		  //  file.renameTo(new File(file.getAbsolutePath().concat(suffix)));
+    		  //}
+    		  control.saveToFile(file);
+    	  }
+      }
       if (useLocalDir)
         localDirectory = fChooser.getCurrentDirectory();
       else 
-	{
-	  currentDirectory = fChooser.getCurrentDirectory();
-	  ExpCoordinator.setProperty(ExpCoordinator.DEFAULT_DIR, currentDirectory.getPath());
-	}
+      {
+    	  currentDirectory = fChooser.getCurrentDirectory();
+    	  ExpCoordinator.setProperty(ExpCoordinator.DEFAULT_DIR, currentDirectory.getPath());
+      }
       fChooser = null;
     }
   public void setSuffix(String str)
@@ -162,4 +162,5 @@ public class MenuFileAction extends ONL.UserAction //Mode.BaseAction
     }
   public void setSaveable(Saveable s) { control = s;}
   protected void setLocalDir(java.io.File f) { localDirectory = f;}
+  protected boolean isLoading() { return loading;}
 }

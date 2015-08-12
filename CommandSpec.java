@@ -37,6 +37,7 @@ public class CommandSpec
 	public static final String NEXTHOPIP_STR = "nexthopip";
 	public static final String IPADDR_STR = "ipaddress";
 	public static final String FIELD_STR = "field";
+	public static final String GENERATEDPW_STR = "generated_password";
 	public static final String COMMAND_STR = "COMMAND";
 	public static final String CFG_STR = "CONFIGURE";
 	public static final String PORT_STR = "PORT";
@@ -279,6 +280,7 @@ public class CommandSpec
 	public void setDefaults(Object[] vals)
 	{
 		int num_vals = Array.getLength(vals);
+		ExpCoordinator.print(new String("CommandSpec(" + displayLabel + "):setDefaults params size " + params.size()), 5);
 		if (num_vals == numParams)
 		{
 			for (int i = 0; i < numParams; ++i)

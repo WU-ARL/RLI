@@ -63,6 +63,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 	public static final String IXP_LBL = "IXP";
 	public static final String UNKNOWN_LBL = "unknown";
 	public static final String LINK_LBL = "link";
+	public static final String PORTS_INIT = "Ports_initialized";
 	public static final String PORT_LBL = "Port";
 	//Properties
 	public static final String SELECTED = "selected";
@@ -139,6 +140,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 	private SubnetManager.Subnet originalSubnet = null;
 	
 	private Color iconColor = null;
+	private Dimension iconSize = null;
 
 
 	public static interface ONLMonitorable
@@ -666,6 +668,18 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		{ 
 			ExpCoordinator.print(new String("ONLComponent.PortBase(" + getLabel() + ").setInterfaceType " + s), TEST_10G);
 			properties.setProperty(INTERFACE_TYPE, s);
+			addToDescription(INTERFACE_TYPE, s);
+		}
+		public int getBandwidth() //return port bandwidth in Mbps based on interface type
+		{
+			int m = 1;
+			String interfaceType = getInterfaceType();
+			
+			if (interfaceType.endsWith("G")) m = 1000;
+		    int end = interfaceType.length() - 1;
+			int rtn = Integer.parseInt(interfaceType.substring(0,end));
+			rtn = rtn * m;
+			return rtn;
 		}
 		/*
     public void setNetmask(int m) 
@@ -1032,6 +1046,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		properties.setProperty(LABEL, lbl);
 		properties.setProperty(TYPE, tp);
 		properties.setProperty(REMAP_SENT, true);
+		properties.setProperty(PORTS_INIT, false);
 		eventListeners = new Vector();
 		//add property listener to send on state change;
 		stateListener = new StateListener(this);
@@ -1048,6 +1063,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		properties.setProperty(SELECTED, false);
 		properties.setProperty(STATE, NOT_INIT);
 		properties.setProperty(TYPE, attributes.getValue(uri, ExperimentXML.TYPENAME));
+		properties.setProperty(PORTS_INIT, false);
 		String str = attributes.getValue(uri, ExperimentXML.CTYPE);
 		if (str != null) setComponentType(str);
 		//properties.setProperty(TYPENAME, attributes.getValue(uri, ExperimentXML.TYPENAME));
@@ -1808,6 +1824,9 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 	protected Color getIconColor() { return iconColor;}
 	protected void setIconColor(Color c) { iconColor = c;}
 	protected void setIconColor(int r, int g, int b) { setIconColor(new Color(r,g,b));}
+	protected void setIconSize(int w, int h) { setIconSize(new Dimension(w, h));}
+	protected void setIconSize(Dimension d) { iconSize = d;}
+	protected Dimension getIconSize() { return iconSize;}
 	protected String getUserLabel()
 	{
 		String rtn = getProperty(ExperimentXML.USER_LABEL);

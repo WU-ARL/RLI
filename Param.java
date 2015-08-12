@@ -374,7 +374,7 @@ public class Param extends ParamSpec
 		if (isDouble() && o instanceof Double) committedValue = new Double((Double)o);
 		if (isDouble() && o instanceof WCDouble) committedValue = new WCDouble((WCDouble)o);
 		if (isBool() && o instanceof Boolean) committedValue = new Boolean((Boolean)o);
-		if (isString() && o instanceof String) committedValue = new String((String)o);
+		if ((isString() || isPassword()) && o instanceof String) committedValue = new String((String)o);
 		if (isIPAddr() && o instanceof ONL.IPAddress) committedValue = new ONL.IPAddress((ONL.IPAddress)o);  
 		if (isNextHop() && o instanceof NextHop) 
 		{
@@ -408,6 +408,7 @@ public class Param extends ParamSpec
 			if (isDouble()) defaultValue = new Double(0);
 			if (isBool()) defaultValue = new Boolean(false);
 			if (isString()) defaultValue = new String("");
+			if (isPassword()) setDefaultValue();
 			if (isIPAddr()) defaultValue = new ONL.IPAddress();
 			if (isNextHop() && !isNextHopIP()) defaultValue = new NextHop(0, hardware);
 			if (isNextHopIP()) defaultValue = new NextHopIP(0, hardware);

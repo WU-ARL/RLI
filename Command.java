@@ -87,6 +87,8 @@ public class Command extends CommandSpec
 		private Command.NCCPOp commandOp = null;
 		private boolean cancelled = false;
 		private boolean can_undo = false;
+		private Command batchCommand = null;
+		private Object cmd_values = null;
 
 		public Edit(Command cmd, Experiment exp)
 		{
@@ -98,6 +100,7 @@ public class Command extends CommandSpec
 			super(cmd.parentComponent, exp);
 			ExpCoordinator.print(new String("Command.Edit"), HWTable.TEST_HWTABLE);
 			cmd.print(HWTable.TEST_HWTABLE);
+			batchCommand = cmd.getCopy(cmd.getParentComponent(), vals);
 			commandOp = cmd.createNCCPOp(vals);//new Command.NCCPOp(cmd, vals, cmd.parentComponent);
 		}
 
@@ -130,6 +133,8 @@ public class Command extends CommandSpec
 		public boolean getCancelled() { return cancelled;}
 		protected void setCommandOp(Command.NCCPOp op) { commandOp = op;}
 		protected Command.NCCPOp getCommandOp() { return commandOp;}
+		protected void setCommandOpEdit() { commandOp.setEdit(this);}
+		public Command getBatchCommand() { return batchCommand;}
 	}//end class Command.Edit
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,6 +294,7 @@ public class Command extends CommandSpec
 		private Hardware.MDataType mDataType = null;
 		private Hardware.NCCP_Request request = null;
 		private ONL.Log commandLog = null;
+		private Command.Edit cEdit = null;
 
 		public NCCPOp(Hardware.MDataType mdt)
 		{
@@ -335,6 +341,7 @@ public class Command extends CommandSpec
 					(StatusDisplay.Error.LOG | StatusDisplay.Error.STATUSBAR )));//| StatusDisplay.Error.POPUP)));
 			ExpCoordinator.print("Hardware.CommandOp.OpFailed command :", 3);
 			mDataType.print(3);
+			if (cEdit != null && cEdit.canUndo()) cEdit.undo();
 			((NCCPOpManager.Manager)mDataType.getONLComponent()).removeOperation(this);
 		} 
 		public void setCommandLog(ONL.Log clog) { commandLog = clog;}
@@ -351,6 +358,7 @@ public class Command extends CommandSpec
 		public Command getCommand() { return (mDataType.getCommand());}
 		//public Object[] getParamValues() { return (mDataType.getValues());} 
 		protected Hardware.NCCP_Request getRequest() { return request;}
+		protected void setEdit(Command.Edit e) { cEdit = e;}
 	}
 	//////////////////////////////////// Command methods /////////////////////////////////////////////////////////////////////////
 	public Command(Command c) { this((CommandSpec)c, null, c.getParentComponent(), c.getFieldOwner());}
@@ -363,6 +371,12 @@ public class Command extends CommandSpec
 		parentComponent = c;
 		if (o != null) fieldOwner = o;
 		initParams(cspec, defaults);
+	}
+	public String toString() 
+	{
+		String rtn = super.toString();
+		rtn = rtn + " parent:" + parentComponent;
+		return rtn;
 	}
 	public void initParams(CommandSpec cspec, Vector defaults)//Param[] defaults)
 	{
@@ -481,8 +495,13 @@ public class Command extends CommandSpec
 	public Command getCopy(Object[] defaults) { return (getCopy(null, defaults));}
 	public Command getCopy(ONLComponent parent, Object[] defaults)
 	{
-		Command rtn = new Command(this);
-		if (parent != null) rtn.setParentComponent(parent);
+		//Vector objs = new Vector();
+		//for (int i = 0; i < defaults.length; ++i)
+		//{
+			//objs.add(defaults[i]);
+		//}
+		Command rtn = new Command((CommandSpec)this, parent);
+		//if (parent != null) rtn.setParentComponent(parent);
 		if (defaults != null) rtn.setDefaults(defaults);
 		ExpCoordinator.print("Command.getCopy", TEST_COMMAND);
 		rtn.print(TEST_COMMAND);
@@ -493,6 +512,26 @@ public class Command extends CommandSpec
 	{ 
 		if (opcode >= 0) return (new Command.NCCPOp(this, vals, parentComponent));
 		return null;
+	}
+	
+	public void writeXMLBatchCommand(XMLStreamWriter xmlWrtr) throws XMLStreamException 
+	{ 
+		xmlWrtr.writeStartElement(ExperimentXML.BATCH_COMMAND);
+
+		if (parentComponent != null)
+		{
+			xmlWrtr.writeStartElement(ExperimentXML.COMPONENT);
+			parentComponent.writeXMLID(xmlWrtr);
+			xmlWrtr.writeEndElement();
+		}
+		if (this instanceof HWTableElement.TableCommand) 
+		{
+			xmlWrtr.writeStartElement(Hardware.MDataType.TABLE_ELEM);
+			((HWTableElement.TableCommand)this).getEntry().writeXML(xmlWrtr);
+			xmlWrtr.writeEndElement();
+		}
+		writeXML(xmlWrtr, getXMLElemName());
+		xmlWrtr.writeEndElement(); //end elemnm
 	}
 
 	public void writeXML(XMLStreamWriter xmlWrtr) throws XMLStreamException { writeXML(xmlWrtr, getXMLElemName());}

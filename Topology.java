@@ -50,15 +50,13 @@ public class Topology
 {
 	public final static int TEST_DEFRTS = 1;
 	private final int MAX_HOSTS_PER_CLUSTER = 9;
-	private final int MAX_NSPS = 8;
-	//private final int MAX_NSPS = 255;
 	private ExpCoordinator expCoordinator = null;
-	private ONLComponentList nodes = null; //includes hosts, nsps, wugs
+	private ONLComponentList nodes = null; //includes all hardware
 	private ONLComponentList links = null; //to be added later
 	private Vector clusters = null;
 	private LinkTool linktool = null;
 	private LinkToolAction linktoolAction = null;
-	private int nsp_count = 0;
+	private int hardware_count = 0;
 	private int host_count = 0;
 
 	private boolean baseTopology = false;
@@ -106,7 +104,6 @@ public class Topology
 		private ONLComponent.PortBase rootPort = null;
 		private Visited componentsVisited = null;
 		private VisitedSubnets subnetsReached = null;
-		private boolean ignoreNSP = false;
 
 		private class VisitedPoint 
 		{
@@ -232,7 +229,6 @@ public class Topology
 						//if it's a switch add a route for the subnet and add the rest of the ports to the seen list. need to handle special class GigE separately
 					{
 						if (sn != null && !subnetsReached.contains(sn)) addSubnet(sn, connectedTo);
-						boolean isnsp = (tmp_pnt.port instanceof NSPPort);
 						if (connectedTo.port instanceof Hardware.Port)
 						{
 							Hardware tmp_sw = (Hardware)connectedTo.port.getParent();
@@ -245,9 +241,8 @@ public class Topology
 								//if we haven't seen this port before add it to the list and add a route to the subnet
 								if (!componentsVisited.contains(tmp_port))
 								{
-									//if we're looking at a link that connects an nsp to a switch we just want to stop here.
 									VisitedPoint vp = new VisitedPoint(connectedTo.nhip, tmp_port, (connectedTo.numHops + 1));
-									if (!isnsp || ignoreNSP) newSeen.add(vp);
+									newSeen.add(vp);
 									componentsVisited.add(vp);
 								}
 							}
@@ -264,15 +259,12 @@ public class Topology
 								//if we haven't seen this port before add it to the list and add a route to the subnet
 								if (!componentsVisited.contains(tmp_port))
 								{
-									//if we're looking at a link that connects an nsp to a switch we just want to stop here.
 									VisitedPoint vp = new VisitedPoint(connectedTo.nhip, tmp_port, (connectedTo.numHops + 1));
-									if (!isnsp || ignoreNSP) newSeen.add(vp);
+									newSeen.add(vp);
 									componentsVisited.add(vp);
 								}
 							}
 						}
-						//if we're looking at a link that connects an nsp to a switch we just want to stop here.
-						if (isnsp) newSeen.remove(connectedTo);
 					}
 					else if (sn != null && !subnetsReached.contains(sn)) //it's an endpoint so just add the subnet route
 						addSubnet(sn, connectedTo);
@@ -296,221 +288,7 @@ public class Topology
 			}
 		}
 		public VisitedSubnets getSubnetsReached() { return subnetsReached;}
-		public void setIgnoreNSP(boolean b) { ignoreNSP = b;}
 	}//end class ReachableSubnets
-	/*private class ReachableSubnets
-	{
-		private ONLComponent.PortBase rootPort = null;
-		private Vector<ONLComponent.PortBase> componentsVisited = null;
-		private Vector<SubnetManager.Subnet> subnetsVisited = null;
-		private boolean generateRoutes = true;
-
-		private class VisitedPoint 
-		{
-			ONL.IPAddress nhip = null;
-			ONLComponent.PortBase port = null;
-
-			public VisitedPoint(ONL.IPAddress ni, ONLComponent.PortBase p) { nhip = ni; port = p;}
-		}
-
-		private class Visited extends Vector<VisitedPoint>
-		{
-			public Visited() { super();}
-			public boolean contains(ONLComponent.PortBase p)
-			{
-				return (getPoint(p) != null);
-			}
-			public VisitedPoint getPoint(ONLComponent.PortBase p)
-			{
-				int max = size();
-				VisitedPoint elem;
-				for (int i = 0; i < max; ++i)
-				{
-					elem = elementAt(i);
-					if (elem.port == p) return elem;
-				}
-				return null;
-			}
-		}
-
-		public ReachableSubnets(ONLComponent.PortBase rtp)
-		{
-			rootPort = rtp;
-			componentsVisited = new Vector<ONLComponent.PortBase>();
-			subnetsVisited = new Vector<SubnetManager.Subnet>();
-		}
-
-		public ReachableSubnets(ONLComponent.PortBase rtp, boolean generate)
-		{
-			this(rtp);
-			generateRoutes = generate;
-		}
-
-		public void addRoutes()
-		{    
-			ExpCoordinator.print(new String("Topology.ReachableSubnets.addRoutes root:" + rootPort.getLabel()), TEST_DEFRTS);
-			//clear any old state
-
-			componentsVisited.clear();
-			subnetsVisited.clear();
-
-			Visited lastReachable = new Visited();
-			componentsVisited.add(rootPort);
-			lastReachable.add(new VisitedPoint(null, rootPort));
-
-			while (lastReachable.size() > 0) 
-			{
-				lastReachable = findReachableSubnets(lastReachable);
-			}
-			ExpCoordinator.print("Topology.ReachableSubnets.addRoutes finished", TEST_DEFRTS);
-		}
-		private Visited findReachableSubnets(Visited lastVisited)
-		{
-			int max = links.size();
-			LinkDescriptor elem;
-			Visited newSeen = new Visited();
-			VisitedPoint connectedTo = null;  
-			int portid = rootPort.getID();
-			ExpCoordinator.print(new String("Topology.ReachableSubnets.findReachableSubnets for port " + rootPort.getLabel() + " lastVisited.size() = " + lastVisited.size()), TEST_DEFRTS);
-			for (int i = 0; i < max; ++i) //iterate through all links
-			{
-				connectedTo = null;
-				elem = (LinkDescriptor)links.elementAt(i);
-				ExpCoordinator.print(new String("   link[" + i + "]: (" + elem.getPoint1().getLabel() + ", " + elem.getPoint2().getLabel() + ")"), TEST_DEFRTS);
-				//if the list of lastVisited ports contains one of the endpoints look at the other end(connectedTo)
-				VisitedPoint tmp_pnt = lastVisited.getPoint((ONLComponent.PortBase)elem.getPoint1());
-				if (tmp_pnt != null)
-					connectedTo = new VisitedPoint(tmp_pnt.nhip, (ONLComponent.PortBase)elem.getPoint2());
-				else 
-				{
-					tmp_pnt = lastVisited.getPoint((ONLComponent.PortBase)elem.getPoint2());
-					if (tmp_pnt != null)
-						connectedTo = new VisitedPoint(tmp_pnt.nhip, (ONLComponent.PortBase)elem.getPoint1());
-				}
-
-				//process connectedTo if we haven't seen it before
-				if (connectedTo != null && !componentsVisited.contains(connectedTo.port))
-				{
-					if ((connectedTo.nhip == null || connectedTo.nhip.isZero()) && connectedTo.port.isRouter()) 
-					{
-						connectedTo.nhip = connectedTo.port.getIPAddr();
-						ExpCoordinator.print(new String("Topology.ReachableSubnets.findReachableSubnets setting nhip connectedTo:" + connectedTo.port.getLabel() + " nhip:" + connectedTo.nhip), TEST_DEFRTS);
-					}
-					else
-						ExpCoordinator.print(new String("Topology.ReachableSubnets.findReachableSubnets nhip stays the same connectedTo:" + connectedTo.port.getLabel() + " nhip:" + connectedTo.nhip), TEST_DEFRTS);
-
-					componentsVisited.add(connectedTo.port);
-					newSeen.add(connectedTo);
-					SubnetManager.Subnet sn = connectedTo.port.getSubnet();
-					//if we haven't seen this subnet before we need to add a route to it
-					// if connectedTo is a Router port we need to supply a valid nhip and add look at the other router ports	
-					if (connectedTo.port.isRouter())
-					{
-						if (sn != null && !subnetsVisited.contains(sn)) addSubnet(sn, connectedTo.nhip);
-						Hardware tmp_rtr = (Hardware)connectedTo.port.getParent();
-						Hardware.Port tmp_port;
-						SubnetManager.Subnet tmp_sn;
-						int num_ports = tmp_rtr.getNumPorts();
-						//look at the rest of the router ports
-						for (int p = 0; p < num_ports; ++p)
-						{
-							tmp_port = tmp_rtr.getPort(p);
-							//if we haven't seen this port before add it to the list and add a route to the subnet
-							if (!componentsVisited.contains(tmp_port))
-							{
-								newSeen.add(new VisitedPoint(connectedTo.nhip, tmp_port));
-								componentsVisited.add(tmp_port);
-								tmp_sn = tmp_port.getSubnet();
-								addSubnet(tmp_sn, connectedTo.nhip);
-							}
-						}
-					}
-					else if (connectedTo.port.isSwitch()) 
-						//if it's a switch add a route for the subnet and add the rest of the ports to the seen list. need to handle special class GigE separately
-					{
-						if (sn != null && !subnetsVisited.contains(sn)) addSubnet(connectedTo.port.getSubnet(), connectedTo.nhip);
-						boolean isnsp = (tmp_pnt.port instanceof NSPPort);
-						if (connectedTo.port instanceof Hardware.Port)
-						{
-							Hardware tmp_sw = (Hardware)connectedTo.port.getParent();
-							Hardware.Port tmp_port;
-							int num_ports = tmp_sw.getNumPorts();
-							//look at the rest of the router ports
-							for (int p = 0; p < num_ports; ++p)
-							{
-								tmp_port = tmp_sw.getPort(p);
-								//if we haven't seen this port before add it to the list and add a route to the subnet
-								if (!componentsVisited.contains(tmp_port))
-								{
-									//if we're looking at a link that connects an nsp to a switch we just want to stop here.
-									if (!isnsp || !generateRoutes) newSeen.add(new VisitedPoint(connectedTo.nhip, tmp_port));
-									componentsVisited.add(tmp_port);
-								}
-							}
-						}
-						else if (connectedTo.port instanceof GigEDescriptor.Port)
-						{
-							GigEDescriptor tmp_sw = (GigEDescriptor)connectedTo.port.getParent();
-							GigEDescriptor.Port tmp_port;
-							int num_ports = tmp_sw.getNumPorts();
-							//look at the rest of the router ports
-							for (int p = 0; p < num_ports; ++p)
-							{
-								tmp_port = tmp_sw.getPort(p);
-								//if we haven't seen this port before add it to the list and add a route to the subnet
-								if (!componentsVisited.contains(tmp_port))
-								{
-									//if we're looking at a link that connects an nsp to a switch we just want to stop here.
-									if (!isnsp || !generateRoutes) newSeen.add(new VisitedPoint(connectedTo.nhip, tmp_port));
-									componentsVisited.add(tmp_port);
-								}
-							}
-						}
-						//if we're looking at a link that connects an nsp to a switch we just want to stop here.
-						if (isnsp) newSeen.remove(connectedTo);
-					}
-					else if (sn != null && !subnetsVisited.contains(sn)) //it's an endpoint so just add the subnet route
-						addSubnet(connectedTo.port.getSubnet(), null);
-				}
-			}
-			return newSeen;
-		}
-		private void addSubnet(SubnetManager.Subnet subnet, ONL.IPAddress nh)
-		{
-			SubnetManager.Subnet sn = subnet;
-			if (ExpCoordinator.isOldSubnet() && subnet != null)
-			{
-				sn = ((OldSubnetManager.Subnet)subnet).getRootSubnet();
-				if (sn.isEqual(((OldSubnetManager.Subnet)rootPort.getSubnet()).getRootSubnet()))  sn = subnet;
-			}
-			if	(sn != null && !subnetsVisited.contains(sn))
-			{
-				int portid = rootPort.getID();
-				ONL.IPAddress nhip = nh;
-				if (nh == null) nhip = new ONL.IPAddress();
-				ExpCoordinator.print(new String("Topology.ReachableSubnets.addSubnet  " + sn.getBaseIP() + "/" + sn.getNetmask() + " nhip:" + nhip.toString() + " nh port:" + portid), TEST_DEFRTS);
-				subnetsVisited.add(sn);
-				if (generateRoutes)
-				{
-					if (rootPort.getParent() instanceof NSPDescriptor)
-						((NSPDescriptor)rootPort.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), new Route.NextHop(portid, 0));
-					else
-					{
-						if (rootPort.isRouter() && (rootPort.getParent() instanceof Hardware))
-						((Hardware)rootPort.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
-						else 
-						{
-							if (rootPort instanceof Hardware.Port)
-								((Hardware.Port)rootPort).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
-						}
-					}
-				}
-			}
-		}
-		public Vector<SubnetManager.Subnet> getSubnetsVisited() { return subnetsVisited;}
-		public void setGenerateRoutes(boolean b) { generateRoutes = b;}
-	}//end class ReachableSubnets
-	 */
 
 
 	public static abstract class TopologyAction extends ONL.UserAction implements PropertyChangeListener
@@ -527,22 +305,7 @@ public class Topology
 				setEnabled(!ExpCoordinator.isTopoSet());
 		}
 	}
-	/*
 
-	public static class RemoveRtsAction extends ONL.UserAction
-	{
-		protected Topology topology = null;
-		public RemoveRtsAction(Topology ec)
-		{
-			super("Remove Default Routes", false, false);
-			topology = ec;
-			//setEnabled(false);
-		}
-		public void actionPerformed(ActionEvent e)
-		{
-			topology.removeDefaultRts();
-		}
-	}*/
 	public static class DefaultRtsAction extends ONL.UserAction
 	{
 		protected Topology topology = null;
@@ -786,7 +549,6 @@ public class Topology
 		int max = nodes.size();
 		//System.out.println("Topology.generateDefaultRts");
 		ONLComponent c;
-		String nspmsg = "";
 		int i;
 
 		for (i = 0; i < max; ++i)
@@ -798,12 +560,7 @@ public class Topology
 				((Hardware)c).removeGeneratedRoutes();
 				//if (c.isRouter()) ((Hardware)c).generateDefaultRts();
 				int num_ports = ((Hardware)c).getNumPorts();
-				boolean isnsp = (c instanceof NSPDescriptor);
 				VisitedSubnets subnetsUnreached = null;//this is the list of Subnets that and NSP can't reach that others can
-				if (isnsp) 
-				{
-					subnetsUnreached = new VisitedSubnets();
-				}
 				ExpCoordinator.print(new String("Topology.generateDefaultRts component(" + c.getLabel() + ") nports=" + num_ports), TEST_DEFRTS);
 				VisitedSubnets subnets = new VisitedSubnets();
 				for (int j = 0; j < num_ports; ++j)
@@ -829,22 +586,6 @@ public class Topology
 									subnets.add(elem);
 								}
 							}
-							if (isnsp && subnetsUnreached.contains(elem.subnet)) 
-							{
-								VisitedSubnet tmp = subnetsUnreached.getVisitedSubnet(elem.subnet);
-								subnetsUnreached.remove(tmp);
-							}
-						}
-						
-						if(isnsp)
-						{
-							rs.setIgnoreNSP(true); //regenerate the subnet list as if it's not an NSP and see what we missed
-							rs.findSubnets();
-							sreached = rs.getSubnetsReached();
-							for (VisitedSubnet elem : sreached)
-							{
-								if (!subnets.contains(elem.subnet)) subnetsUnreached.add(elem);
-							}
 						}
 					}
 				}
@@ -852,42 +593,7 @@ public class Topology
 				{
 					addSubnetRoute(elem);
 				}
-				if (isnsp && !subnetsUnreached.isEmpty())
-				{
-					String tmp_str = new String(c.getLabel() + " cannot reach components ");
-					int num_sn = subnetsUnreached.size();
-					Vector<ONLComponent> unreachableComponents = new Vector<ONLComponent>();
-					SubnetManager.Subnet tmp_sn = null;
-					int s = 0;
-					for (s = 0; s < num_sn; ++s)
-					{
-						tmp_sn = subnetsUnreached.elementAt(s).subnet;
-						int num_snports = tmp_sn.portList.size();
-						for (int sp = 0; sp < num_snports; ++sp)
-						{
-							ONLComponent.PortBase elem = tmp_sn.portList.elementAt(sp);
-							if (!elem.isSwitch() && !unreachableComponents.contains(elem.getParent())) 
-								unreachableComponents.add(elem.getParent());
-						}
-					}
-					int num_c = unreachableComponents.size();
-					for (s = 0; s < num_c; ++s)
-					{
-						if (s == 0) tmp_str = tmp_str.concat(new String(unreachableComponents.elementAt(s).getLabel()));
-						else tmp_str = tmp_str.concat(new String(", " + unreachableComponents.elementAt(s).getLabel()));
-					}
-					if (num_c > 0) nspmsg = nspmsg.concat(tmp_str.concat(".\n"));
-					else nspmsg = "";
-				}
 			}
-		}
-		
-		if (!nspmsg.isEmpty())
-		{
-			JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), //mainWindow,
-					nspmsg,
-					"Generated Default Routes: NSP Warning", 
-					JOptionPane.PLAIN_MESSAGE);
 		}
 	}
 	private void addSubnetRoute(VisitedSubnet subnet)
@@ -900,117 +606,15 @@ public class Topology
 			ONL.IPAddress nhip = subnet.nhip;
 			ExpCoordinator.print(new String("Topology.addSubnetRoute for  " + subnet.toString()), TEST_DEFRTS);
 
-			if (port.getParent() instanceof NSPDescriptor)
-				((NSPDescriptor)port.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), new Route.NextHop(portid, 0));
-			else
-			{
-				if (port.isRouter() && (port.getParent() instanceof Hardware))
-					((Hardware)port.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
-				else 
-				{
-					if (port instanceof Hardware.Port)
-						((Hardware.Port)port).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
-				}
-			}
+			if (port.isRouter() && (port.getParent() instanceof Hardware))
+			    ((Hardware)port.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
+			else 
+			    {
+				if (port instanceof Hardware.Port)
+				    ((Hardware.Port)port).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
+			    }
 		}
 	}
-	/*
-	 * public void generateDefaultRts()
-	{
-		int max = nodes.size();
-		//System.out.println("Topology.generateDefaultRts");
-		ONLComponent c;
-		String nspmsg = "";
-		int i;
-
-		for (i = 0; i < max; ++i)
-		{
-			c = nodes.onlComponentAt(i);
-			//System.out.println(c.getLabel());
-			if (c instanceof Hardware) 
-			{
-				((Hardware)c).removeGeneratedRoutes();
-				if (c.isRouter()) ((Hardware)c).generateDefaultRts();
-				int num_ports = ((Hardware)c).getNumPorts();
-				boolean isnsp = (c instanceof NSPDescriptor);
-				Vector<SubnetManager.Subnet> subnetsUnreached = null;//this is the list of Subnets that and NSP can't reach that others can
-				Vector<SubnetManager.Subnet> mySubnets = null;//this is the list of Subnets that and NSP can't reach that others can
-				if (isnsp) 
-				{
-					subnetsUnreached = new Vector<SubnetManager.Subnet>();
-					mySubnets = new Vector<SubnetManager.Subnet>();
-				}
-				ExpCoordinator.print(new String("Topology.generateDefaultRts component(" + c.getLabel() + ") nports=" + num_ports), TEST_DEFRTS);
-				for (int j = 0; j < num_ports; ++j)
-				{
-					Hardware.Port p = ((Hardware)c).getPort(j);
-					if (p.getSubnet() != null)
-					{
-						ReachableSubnets rs = new ReachableSubnets(p);
-						rs.addRoutes();
-						if (isnsp)
-						{
-							//TODO does mySubnets need to be constructed outside before loop before looping through ports
-							if (!mySubnets.contains(p.getSubnet())) mySubnets.add(p.getSubnet()); 
-							ONLComponent.PortBase lnkto = (ONLComponent.PortBase)((NSPPort)p).getLinkedTo();
-							if (lnkto != null)
-							{
-								ONL.addAllNoDupe(mySubnets, rs.getSubnetsVisited());
-								ExpCoordinator.print(new String("Topology.generateDefaultRoutes port:" + p.getLabel() + " linkedto:" + lnkto.getLabel()), TEST_DEFRTS);
-								if (lnkto.isSwitch()) 
-								{
-									rs.setGenerateRoutes(false);
-									rs.addRoutes();
-									ONL.addAllNoDupe(subnetsUnreached, rs.getSubnetsVisited());
-								}
-							}
-						}
-					}
-				}
-				if (isnsp && !subnetsUnreached.isEmpty())
-				{
-					String tmp_str = new String(c.getLabel() + " cannot reach components ");
-					int num_sn = mySubnets.size();
-					int s = 0;
-					SubnetManager.Subnet tmp_sn = null;
-					for (s = 0; s < num_sn; ++s)
-					{
-						tmp_sn = mySubnets.elementAt(s);
-						if (subnetsUnreached.contains(tmp_sn)) subnetsUnreached.remove(tmp_sn);
-					}
-					num_sn = subnetsUnreached.size();
-					Vector<ONLComponent> unreachableComponents = new Vector<ONLComponent>();
-					for (s = 0; s < num_sn; ++s)
-					{
-						tmp_sn = subnetsUnreached.elementAt(s);
-						int num_snports = tmp_sn.portList.size();
-						for (int sp = 0; sp < num_snports; ++sp)
-						{
-							ONLComponent.PortBase elem = tmp_sn.portList.elementAt(sp);
-							if (!elem.isSwitch() && !unreachableComponents.contains(elem.getParent())) 
-								unreachableComponents.add(elem.getParent());
-						}
-					}
-					int num_c = unreachableComponents.size();
-					for (s = 0; s < num_c; ++s)
-					{
-						if (s == 0) tmp_str = tmp_str.concat(new String(unreachableComponents.elementAt(s).getLabel()));
-						else tmp_str = tmp_str.concat(new String(", " + unreachableComponents.elementAt(s).getLabel()));
-					}
-					if (num_c > 0) nspmsg = nspmsg.concat(tmp_str.concat(".\n"));
-					else nspmsg = "";
-				}
-			}
-		}
-		if (!nspmsg.isEmpty())
-		{
-			JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), //mainWindow,
-					nspmsg,
-					"Generated Default Routes: NSP Warning", 
-					JOptionPane.PLAIN_MESSAGE);
-		}
-	}
-	 */
 	public void clearRoutes()
 	{
 		int max = nodes.size();
@@ -1071,14 +675,13 @@ public class Topology
 		else 
 		{
 			//System.out.println("  adding node");
-			if (sd instanceof Hardware) ++nsp_count;
+			if (sd instanceof Hardware) ++hardware_count;
 			//if (sd.getType() == ONLComponent.HOST) ++host_count;
 		}
 
 		if (cl != null) 
 		{
 			sd.setRemoveAction(new RemoveComponentAction(this, sd));
-			if (sd instanceof NSPDescriptor) ((NSPDescriptor)sd).initializePorts();
 			int old_ref = sd.getReference();
 			sd.setProperty(ONLComponent.REF_NUM, getNextRefNum(sd.getReference()));
 			ExpCoordinator.print(new String("Topology.addComponent " + sd.getLabel() + " setting ref from " + old_ref + " to " + sd.getReference()), 6);
@@ -1223,7 +826,7 @@ public class Topology
 		nodes.clear();
 		clusters.removeAllElements();
 		host_count = 0;
-		nsp_count = 0;
+		hardware_count = 0;
 	}
 
 	protected ONLComponentList getNodes() { return nodes;}
@@ -1234,7 +837,7 @@ public class Topology
 		for (int i = 0; i < max; ++i)
 		{
 			ONLComponent c = nodes.onlComponentAt(i);
-			if (c instanceof Hardware && !(c instanceof NSPDescriptor)) rtn.add((Hardware)c);
+			if (c instanceof Hardware) rtn.add((Hardware)c);
 		}
 		return rtn;
 	}
@@ -1269,7 +872,7 @@ public class Topology
 		for (int i = 0; i < max; ++i)
 		{
 			elem = nodes.onlComponentAt(i);
-			if ((elem instanceof Hardware) && (elem.getPropertyInt(Router.INDEX) == ndx)) return ((Hardware)elem);
+			if ((elem instanceof Hardware) && (elem.getPropertyInt(Hardware.INDEX) == ndx)) return ((Hardware)elem);
 		}
 		return null;
 	}
@@ -1326,15 +929,13 @@ public class Topology
 		}
 		rtn.setComponentType(tmp_ctype);
 		rtn.setBaseIPAddr(getValidIP(x));
-		rtn.setProperty(Router.INDEX, x);
+		rtn.setProperty(Hardware.INDEX, x);
 		return rtn;
 	}
 
 	public ONLComponent getNewHW(String hwlbl, String ctype)
 	{
-		//ExpCoordinator.print(new String("Topology.getNewHW hw:" + hwlbl + " ctype:" + ctype), TEST_NSP);
 		if (hwlbl.equals(ONLComponent.VGIGE_LBL)) return (getNewVGigE());
-		if (hwlbl.equals(ONLComponent.NSP_LBL)) return (getNewNSP());
 		//get hardware type
 		HardwareSpec.Subtype hwtp = HardwareSpec.getTheManager().getSubtype(hwlbl);
 		if (hwtp != null) 
@@ -1343,21 +944,10 @@ public class Topology
 		}
 		return null; 
 	}
-	public NSPDescriptor getNewNSP()
-	{
-		//might just want to start from 0 each time and refuse if 8 NSPs already in the topology
-		//if (nsp_count >= MAX_NSPS) return null;
-		int x = getNewRouterIndex();
-		String lbl = new String("NSP" + x);
-		NSPDescriptor nsp = new NSPDescriptor(lbl, expCoordinator);
-		nsp.setBaseIPAddr(getValidIP(x));
-		nsp.setProperty(Router.INDEX, x);
-		return nsp;
-	}
 
 	public GigEDescriptor getNewVGigE()
 	{
-		//might just want to start from 0 each time and refuse if host_count == nsp_count * 7, when GigE added number should be nsp_count * 10
+		//might just want to start from 0 each time and refuse if host_count == hardware_count * 7, when GigE added number should be hardware_count * 10
 		int x = 0;
 		String lbl = new String("gige" + x);
 		while (containsONLComponent(lbl, ONLComponent.VGIGE_LBL))
@@ -1454,7 +1044,7 @@ public class Topology
 		for (int i = 0; i < max; ++i)
 		{
 			ONLComponent c = nodes.onlComponentAt(i);
-			if (c instanceof Hardware && !(c instanceof NSPDescriptor))
+			if (c instanceof Hardware)
 			{
 				((Hardware)c).getHWType().writeXML(xmlWrtr);
 				((Hardware)c).getHWSubtype().writeXML(xmlWrtr);

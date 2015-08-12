@@ -116,7 +116,7 @@ public class LinkTool extends MouseInputAdapter //implements Mode.ToolComponent
 				if (endComponent instanceof GigEDescriptor) endComponent = ((GigEDescriptor)endComponent).getUnlinkedPort();
 				if (!ltool.addLink(linkGraphic, endComponent))
 				{
-					ExpCoordinator.print(new String("LinkTool.ComponentListener::mouseReleased from " + startComponent.getLabel() + " cancelled"), TEST_ADD);
+					//ExpCoordinator.print(new String("LinkTool.ComponentListener::mouseReleased from " + startComponent.getLabel() + " cancelled"), TEST_ADD);
 					if (ltool.isVirtualTopology())
 						ltool.expCoordinator.getCurrentExp().getVirtualTopology().getTopologyPanel().removeLink(linkGraphic);
 					else
@@ -201,13 +201,15 @@ public class LinkTool extends MouseInputAdapter //implements Mode.ToolComponent
 			//  ((end_comp instanceof GigEDescriptor.Port) || (end_comp instanceof GigEDescriptor))) 
 			//return false;
 			//10G change return false if interface types not equal & not a GigE-GigE link 
-			if (!start_comp.getInterfaceType().equals(end_comp.getInterfaceType()) &&
-					!(((start_comp instanceof GigEDescriptor.Port) || (start_comp instanceof GigEDescriptor)) && 
-							((end_comp instanceof GigEDescriptor.Port) || (end_comp instanceof GigEDescriptor))))
-			{
-				ExpCoordinator.print(new String("LinkTool.addLink " + comp.toString() + " fail diff interface start:" + start_comp.getLabel() + "(" + start_comp.getInterfaceType() + ")  end:" + end_comp.getLabel() + "(" + end_comp.getInterfaceType() + ")"), TEST_ADD);
-				return false;
-			}
+			
+			//we're just going to allow endpoints with different bandwidths to be linked together.
+			//if (!start_comp.getInterfaceType().equals(end_comp.getInterfaceType()) &&
+				//	!(((start_comp instanceof GigEDescriptor.Port) || (start_comp instanceof GigEDescriptor)) && 
+					//		((end_comp instanceof GigEDescriptor.Port) || (end_comp instanceof GigEDescriptor))))
+			//{
+				//ExpCoordinator.print(new String("LinkTool.addLink " + comp.toString() + " fail diff interface start:" + start_comp.getLabel() + "(" + start_comp.getInterfaceType() + ")  end:" + end_comp.getLabel() + "(" + end_comp.getInterfaceType() + ")"), TEST_ADD);
+				//return false;
+			//}
 			
 			//SUBNET:add call SubnetManager addLink here
 			try {
@@ -219,7 +221,8 @@ public class LinkTool extends MouseInputAdapter //implements Mode.ToolComponent
 				}
 				else
 					SubnetManager.addLink((ONLComponent.PortBase)start_comp, (ONLComponent.PortBase)end_comp);
-			}catch(SubnetManager.SubnetException e)
+			}
+			catch(SubnetManager.SubnetException e)
 			{
 				ExpCoordinator.print(new String("LinkTool.addLink failed (" + start_comp.getLabel() + ", " + end_comp.getLabel() + ") -- " + e.getMessage()));
 				return false;

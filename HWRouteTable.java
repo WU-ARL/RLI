@@ -71,6 +71,16 @@ public class HWRouteTable extends HWTable
 		super(oc, ttl, sp, ONLComponent.RTABLE);
 	}
 
+	public void setNextHops()//sets the nexthop pointers to the correct port the table may have been created before the ports
+	{
+		int max = size();
+		for (int i = 0; i < max; ++i)
+		{
+			HWTableElement elem = (HWTableElement)getElement(i);
+			NextHop nh = (NextHop)elem.getField(ExperimentXML.ROUTE_NEXTHOP).getCurrentValue();
+			if (nh != null) nh.getNextHopIP();
+		}
+	}
 	public void addRoute(String ip, int mask, int np, ONL.IPAddress nhip) { addRoute(ip, mask, np, nhip, false, false);}
 	public void addRoute(String ip, int mask, int np, ONL.IPAddress nhip, boolean generated, boolean hst_generated)
 	{

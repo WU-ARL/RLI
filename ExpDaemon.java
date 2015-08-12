@@ -84,22 +84,22 @@ public class ExpDaemon extends ONLDaemon //implements ExpRequest.Listener
 
       public void store(DataOutputStream dout) throws IOException
       {
-	if (returnMarker == null) setMarker(new REND_Marker_class());
-        storeHeader(dout);
-	if (reservationID == null)
-	  {
-	    if (experiment != ExpCoordinator.theCoordinator.getCurrentExp())
-		ExpCoordinator.print(new String("ExpDaemon.NCCP_Requester.store experiment id = " + experiment.getProperty(Experiment.ONLID) + " experiment is not current"), 7);
-	    else
-		ExpCoordinator.print(new String("ExpDaemon.NCCP_Requester.store experiment id = " + experiment.getProperty(Experiment.ONLID)), 7);
-	    NCCP.writeString(experiment.getProperty(Experiment.ONLID), dout);
-	  }
-	else 
-	  {
-	    ExpCoordinator.print(new String("ExpDaemon.NCCP_Requester.store reservation id = " + reservationID), 7);
-	    NCCP.writeString(reservationID, dout);
-	  }
-        storeData(dout);
+    	  if (returnMarker == null) setMarker(new REND_Marker_class());
+    	  storeHeader(dout);
+    	  if (reservationID == null)
+    	  {
+    		  if (experiment != ExpCoordinator.theCoordinator.getCurrentExp())
+    			  ExpCoordinator.print(new String("ExpDaemon.NCCP_Requester.store experiment id = " + experiment.getProperty(Experiment.ONLID) + " experiment is not current"), 7);
+    		  else
+    			  ExpCoordinator.print(new String("ExpDaemon.NCCP_Requester.store experiment id = " + experiment.getProperty(Experiment.ONLID)), 7);
+    		  NCCP.writeString(experiment.getProperty(Experiment.ONLID), dout);
+    	  }
+    	  else 
+    	  {
+    		  ExpCoordinator.print(new String("ExpDaemon.NCCP_Requester.store reservation id = " + reservationID), 7);
+    		  NCCP.writeString(reservationID, dout);
+    	  }
+    	  storeData(dout);
       }
       public Experiment getExperiment() { return experiment;}
       public void setExperiment(Experiment e ) { experiment = e;}
@@ -109,7 +109,7 @@ public class ExpDaemon extends ONLDaemon //implements ExpRequest.Listener
       public void setONLComponent(ONLComponent c ) { onlComponent = c;}
       public void storeData(DataOutputStream dout) throws IOException 
       {
-	NCCP.writeComponentID(onlComponent, dout);
+    	  NCCP.writeComponentID(onlComponent, dout);
       }
     }
 

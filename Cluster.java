@@ -78,7 +78,7 @@ public class Cluster
 	}//end class Cluster.AddAction
 
 
-	///////////////////////////////////////////////// Hard coded clusters for NPR and NSP //////////////////////////////////
+	///////////////////////////////////////////////// Hard coded clusters for NPR //////////////////////////////////
 	public static class IXPCluster extends Cluster
 	{
 		public IXPCluster() { this(ONLComponent.IXP_LBL);}
@@ -223,45 +223,6 @@ public class Cluster
 			npr2.getGraphic().setLocation(90, 95);
 		}
 	}//end class Cluster.NPRAction
-
-
-	public static class NSPAction extends AbstractAction //Cluster.AddAction
-	{
-		public NSPAction()
-		{
-			super("Add NSP");
-			//super(new NSPCluster());
-		}
-		public void actionPerformed(ActionEvent e)
-		{
-			final String opt0 = "OK";
-			final String opt1 = "Cancel";
-			Object[] options = {opt0,opt1};
-			TextFieldwLabel num = new TextFieldwLabel(new JTextField("1"), "How many instances?");
-			Object[] objarray = {num};
-			int rtn = JOptionPane.showOptionDialog(ExpCoordinator.getMainWindow(), 
-					objarray, 
-					(String)getValue(Action.NAME), 
-					JOptionPane.YES_NO_OPTION,
-					JOptionPane.QUESTION_MESSAGE, 
-					null,
-					options,
-					options[0]);
-
-			if (rtn == JOptionPane.YES_OPTION)
-			{
-				int num_inst = Integer.parseInt(num.getText());
-				Topology topo = ExpCoordinator.theCoordinator.getTopology();
-				for (int i = 0; i < num_inst; ++i)
-				{
-					Hardware hw = (Hardware)topo.getNewHW(ONLComponent.NSP_LBL, ExperimentXML.ROUTER);
-					if (hw != null)
-						ExpCoordinator.theCoordinator.getCurrentExp().addComponent(hw);
-					else ExpCoordinator.print("Cluster.NSPAction.actionPerformed hw null");
-				}
-			}
-		}
-	}//end class Cluster.NSPAction
 
 	/////////////////////////////////////////////////// Cluster.Link ///////////////////////////////////////////////////////
 
@@ -578,7 +539,7 @@ public class Cluster
 				hwi = topo.getNewHW((String)tp.hardware.elementAt(i), null);
 				hwi.setCluster(this);
 				hwi.setProperty(Cluster.HWINDEX, i);
-				if ((hwi instanceof Hardware) && !(hwi instanceof NSPDescriptor))
+				if ((hwi instanceof Hardware))
 					((Hardware)hwi).initializePorts();
 				hardware.addElement(hwi);
 				experiment.addComponent(hwi);
@@ -800,14 +761,6 @@ public class Cluster
 	public static Cluster getClusterType(ONL.Reader rdr) throws java.io.IOException
 	{
 		return (getClusterType(rdr.readString()));
-		//String tp_nm = rdr.readString();
-		//int tp_int = rdr.readInt();
-		/*
-      if (tp_int == ONLComponent.NSP) return (new NSPCluster());
-      if (str_tp.equals(ONLComponent.NPR_LBL) && tp_int == ONLComponent.NPR) return (new NPRCluster());
-      if (str_tp.equals(ONLComponent.IXP_LBL) && tp_int == ONLComponent.IXP) return (new IXPCluster());
-		 */
-		//return null;
 	}
 	public static Cluster getClusterType(String tp_nm)
 	{

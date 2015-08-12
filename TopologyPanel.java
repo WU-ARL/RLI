@@ -277,7 +277,7 @@ public class TopologyPanel extends JLayeredPane implements ListDataListener
 					ExpCoordinator.print(" got the graphic", ONLGraphic.TEST_GRAPHIC);
 					if (nd instanceof HardwareGraphic)
 					{
-						((HardwareGraphic)nd).setSize(82);//70);
+						//((HardwareGraphic)nd).setSize(82);//70);
 						if (!ExpCoordinator.isSPPMon()) ((HardwareGraphic)nd).addPortListener(linktool.getButtonAction());
 						((HardwareGraphic)nd).addNodeListener(componentSelector);
 						//nd.addComponentListener(c.getGraphicsListener());

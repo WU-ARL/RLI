@@ -27,6 +27,7 @@ public class NextHop
 {
 	public static final int TEST_IPADDRESS = 5;
 	public static final int TEST_NHLISTENER = Topology.TEST_DEFRTS;
+	public static final int TEST_PARSE = 1;
 	protected int port = 0;
 	protected ONL.IPAddress nhip = null;
 	private Hardware hardware = null;
@@ -35,6 +36,7 @@ public class NextHop
 	private class NHListener implements PropertyChangeListener
 	{
 		private NextHop nexthop = null;
+	    private boolean port_listener = false;
 		public NHListener(NextHop nh){ nexthop = nh;}
 		//PropertyChangeListener
 		public void propertyChange(PropertyChangeEvent e)
@@ -45,7 +47,17 @@ public class NextHop
 				getNextHopIP();
 				ExpCoordinator.print(new String("NextHop(" + nexthop.toString() + ").NHListener.propertyChange getNextHopIP"), TEST_NHLISTENER);
 			}
+			if (e.getPropertyName().equals(ONLComponent.PORTS_INIT))
+			{
+				if (Boolean.getBoolean(e.getNewValue().toString()))
+				{
+                    nexthop.hardware.removePropertyListener(ONLComponent.PORTS_INIT, this);
+					nexthop.addListener();
+				}
+			}
 		}
+		public boolean isPortListener() { return port_listener;}
+		public void setPortListener(boolean b) { port_listener = b;}
 		//end PropertyChangeListener
 	}
 	public NextHop() {}
@@ -90,8 +102,10 @@ public class NextHop
 	public void parseString(String s) throws java.text.ParseException
 	{
 		String[] strarray = s.split(":");
-		int max = 7;
+		int max = Hardware.MAX_PORTS;
 		if (hardware != null) max = hardware.getNumPorts() - 1;
+		else
+			ExpCoordinator.print(new String("NextHop.parseString hardware null string:" + s), TEST_PARSE);
 		try 
 		{
 			int tmp_int = Integer.parseInt(strarray[0]);    
@@ -149,8 +163,9 @@ public class NextHop
 			if (nhip == null) nhip = new ONL.IPAddress();
 			return nhip; //return null;
 		}
+		else ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP hardware:" + hardware.getLabel()), TEST_IPADDRESS);
 		Hardware.Port p = hardware.getPort(port);
-		if (nhip == null || nhip.isZero() || ExpCoordinator.isOldSubnet())
+		if ((nhip == null || nhip.isZero() || ExpCoordinator.isOldSubnet()) && p != null)
 		{ 	
 			ONLComponent c = p.getLinkedTo();
 		
@@ -206,6 +221,7 @@ public class NextHop
 	{
 		return (new String(toString() + ":" + nhip.getInt()));
 	}
+
 	public void addListener()
 	{
 		ExpCoordinator.print(new String("NextHop(" + toString() + ").addListener"), TEST_NHLISTENER);
@@ -213,7 +229,20 @@ public class NextHop
 		{
 			ExpCoordinator.print(new String("NextHop(" + toString() + ").addListener creating new listener"), TEST_NHLISTENER);
 			nhlistener = new NHListener(this);
-			if (hardware != null) hardware.getPort(port).addPropertyListener(ONLComponent.PortBase.NEXTHOP, nhlistener);
+			//if (hardware != null) hardware.getPort(port).addPropertyListener(ONLComponent.PortBase.NEXTHOP, nhlistener);
+		}
+		if (!nhlistener.isPortListener())
+		{
+			if (hardware != null)
+			{
+				ONLComponent o = hardware.getPort(port);
+				if (o != null)
+					{
+					   nhlistener.setPortListener(true);
+					   o.addPropertyListener(ONLComponent.PortBase.NEXTHOP, nhlistener);
+					}
+				else hardware.addPropertyListener(ONLComponent.PORTS_INIT, nhlistener);
+			}
 		}
 	}
 	public void removeListener()

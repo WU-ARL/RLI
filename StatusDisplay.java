@@ -103,6 +103,7 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 			{
 				dialog = new JDialog(mainWindow, "Error Log");
 				dialog.setSize(500, 120);
+				dialog.setFocusableWindowState(false);
 
 				JScrollPane sp = new JScrollPane(log);
 				sp.setBorder(BorderFactory.createEmptyBorder(10,20,10,20));

@@ -20,6 +20,7 @@ import java.lang.String;
 import java.lang.reflect.Array;
 import java.io.*;
 import javax.xml.stream.*;
+
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 import javax.swing.*;
@@ -302,6 +303,7 @@ public class Field extends Param
 		{ 
 			Command cmd = getCommand();
 			ExpCoordinator.print(new String("Field(" + field.getLabel() + ").UpdateAction.addOperation cmd:" + cmd.toString()), TEST_UPDATE);
+		
 			if (!cmd.isImmediate())
 				ExpCoordinator.theCoordinator.addEdit(new Command.Edit(cmd, cmd.getCurrentValues(), ExpCoordinator.theCoordinator.getCurrentExp()));
 			else

@@ -558,18 +558,6 @@ public class VirtualTopology extends Topology {
 		    ONLComponent rnode = vnodeInfo.getPhysicalComponent();
 		    if (rnode != null) rnode.setSelected(b);
 		}
-		/*
-		 * 
-		 * protected void initializeMenu() { if (menu == null) {
-		 * super.initializeMenu(); if (cpComponent != null && (cpComponent
-		 * instanceof Hardware)) { Vector<Action> cp_actions =
-		 * ((Hardware)cpComponent).getActions(); for (Action a : cp_actions) {
-		 * if (!(a instanceof HWTable.HWTAction)) menu.addCfg(a); } if
-		 * (!(cpComponent instanceof NSPDescriptor)) { cp_actions =
-		 * ((Hardware.HWMonitor)cpComponent.getMonitorable()).getActions(); for
-		 * (Action a : cp_actions) { menu.addMon(a); } } } //TODO add commands
-		 * and monitors from cpComponent } }
-		 */
 	}
 
 	// ///////////////////////////////////// VirtualTopology.VNodeType
@@ -1503,7 +1491,7 @@ public class VirtualTopology extends Topology {
 			ExpCoordinator.print("VirtualTopology.getNewVNode", TEST_ADD);
 		VNode rtn = new VNode(x, ExpCoordinator.theCoordinator,
 				ti.getCP().realNode.getVirtualType(), ti);
-		rtn.setProperty(Router.INDEX, x);
+		rtn.setProperty(Hardware.INDEX, x);
 		return rtn;
 	}
 

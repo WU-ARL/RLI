@@ -124,16 +124,6 @@ public abstract class NodeMonitor implements NCCPConnection.ConnectionListener, 
       if (md != null) md.removeMonitor(m);
     }
 
-  //public boolean isEqual(NodeMonitor nd) { return (nodeID.isEqual(nd.nodeID));}
-  //public boolean isEqual(NodeMonitor.ID nid) { return (nodeID.isEqual(nid));}
-  // public boolean isActive() { return (numMEs > 0);}
-  //public boolean isWUGS() { return (onlComponent.getType() == ONLComponent.NSP || onlComponent.getType() == ONLComponent.WUGS);}
-  /*
-    public boolean isNSP() { return (onlComponent.getType() == ONLComponent.NSP);}
-    public boolean isEndNode() { return (onlComponent.getType() == ONLComponent.HOST);}
-  */
-  //public void sendMessage(NCCP.Message msg) { nodeID.getConnection().sendMessage(msg);}
-
   public ONLComponent getONLComponent() { return onlComponent;}
   public void clear()
     {

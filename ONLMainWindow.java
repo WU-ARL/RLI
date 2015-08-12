@@ -32,6 +32,7 @@
  *
  */
 import javax.swing.*;
+
 import java.util.Vector;
 //import java.awt.Color;
 //import java.awt.Font;
@@ -74,6 +75,7 @@ public class ONLMainWindow extends JFrame //implements Mode.MListener
 		//create menu bar
 		JMenuItem mi;
 		JMenuBar mb = new JMenuBar();
+		mb.setLayout(new BoxLayout(mb, BoxLayout.X_AXIS));
 		setJMenuBar(mb);
 		fileMenu = new JMenu("File");
 		addToMenu(expCoordinator.getFileActions(), fileMenu);

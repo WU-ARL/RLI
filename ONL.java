@@ -862,20 +862,6 @@ public class ONL
 	{
 		int b2 = 0;
 		int b3 = 0;
-		if (lbl.startsWith(NSP_STR))
-		{
-			b2 = Integer.parseInt(lbl.substring(1,2));
-			if (lbl.endsWith(NXP0_STR)) b3 = NXP0;
-			if (lbl.endsWith(NXP1A_STR)) b3 = NXP1A;
-			if (lbl.endsWith(NXP1B_STR)) b3 = NXP1B;
-			if (lbl.endsWith(NXP1C_STR)) b3 = NXP1C;
-			if (lbl.endsWith(NXP2_STR)) b3 = NXP2;
-			if (lbl.endsWith(NXP3_STR)) b3 = NXP3;
-			if (lbl.endsWith(NXP4_STR)) b3 = NXP4;
-			if (lbl.endsWith(NXP5_STR)) b3 = NXP5;
-			if (lbl.endsWith(NXP6_STR)) b3 = NXP6;
-			if (lbl.endsWith(NXP7_STR)) b3 = NXP7;
-		}
 		   ExpCoordinator.print(new String("ONL.getAddrFromLabel " + lbl), 8);
 		if (lbl.startsWith(HST_STR)) 
 		{

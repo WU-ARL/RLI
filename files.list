@@ -19,7 +19,6 @@ ConditionListener.java
 Constant.java 
 ControlPanel.java
 DataPair.java 
-DebugTable.java
 DirectConn.java
 ExpCoordinator.java 
 ExpCompare.java
@@ -30,8 +29,6 @@ ExpRequest.java
 Field.java
 FieldParam.java
 FieldSpec.java 
-FilterDescriptor.java
-FilterTable.java
 GigEDescriptor.java
 Graph.java 
 Hardware.java
@@ -57,6 +54,7 @@ LogScale.java
 Management.java
 MenuDragMouseAdapter.java 
 MenuFileAction.java 
+Monitor.java 
 Monitorable.java
 MonitorAction.java
 MonitorAlgFunction.java 
@@ -64,7 +62,6 @@ MonitorDaemon.java
 MonitorDataType.java 
 MonitorEntry.java 
 MonitorFunction.java 
-Monitor.java 
 MonitorManager.java 
 MonitorMenuItem.java 
 MonitorPlus.java 
@@ -79,13 +76,6 @@ NextHopIP.java
 NodeLabel.java 
 NodeMonitor.java
 NonProxyConn.java
-NSPDescriptor.java 
-NSPMonClasses.java 
-NSPMonitor.java 
-NSPPort.java 
-NSPPortMonitor.java 
-NSPRoute.java
-NSPRouteTable.java
 NumberData.java 
 NumberedAxis.java 
 NumberGraph.java 
@@ -110,30 +100,16 @@ Param.java
 ParamSelector.java
 ParamSpec.java 
 PassiveConditional.java
-PluginClasses.java
-PluginClass.java
-PluginData.java
-PluginInstance.java
-PluginInstanceTable.java
 PollingRate.java 
 PopupList.java 
-PortStats.java
-Priority.java
 Proxy.java
-Queue.java
-QueueTable.java
 REND_Marker_class.java 
 Reservation.java
 RLIbeta.java
 RLI.java
-Route.java 
-RouteTable.java
-Router.java
-RouterPort.java 
 Rubberband.java 
 SessionRecorder.java
 SpecFile.java
-SPPmon.java
 StatusDisplay.java
 SubnetManager.java
 TextFieldPlus.java 
@@ -143,6 +119,5 @@ Topology.java
 TopologyPanel.java 
 Units.java 
 VirtualTopology.java
-VOQueue.java
 Zoom.java 
    

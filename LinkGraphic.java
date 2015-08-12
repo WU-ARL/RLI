@@ -153,31 +153,8 @@ public class LinkGraphic extends ONLGraphic implements ComponentListener
 		{
 			//  ExpCoordinator.print("                      point1 == point2 loopback");
 			//ExpCoordinator.print("                       (" + r.getX() + ", " + r.getY() + ", " + r.getWidth() + ", " + r.getHeight() +")");
-			ONLComponent onlcomp = point1.getONLComponent();
-			Point center = null;
-			if (onlcomp instanceof NSPPort)
-			{
-				center = new Point((int)p1.getX(), (int)(p1.getY() - LOOPBACK_RAD));
-				double rad = 2*LOOPBACK_RAD;
-				Point corner = new Point((int)(p1.getX() - rad), (int)(p1.getY() - rad));
-				r.setFrameFromCenter(p1, corner);
-				p1.translate(x,y);
-				double theta = (Math.PI/2) - ((HardwareGraphic.PortButton)point1).getConnectorTheta();
-				AffineTransform tmp_trans = AffineTransform.getRotateInstance(theta, p1.getX(), p1.getY());
-				if (loopTransform == null || !loopTransform.equals(tmp_trans)) 
-				{
-					corner = new Point((int)(center.getX() - LOOPBACK_RAD), (int)(center.getY() - LOOPBACK_RAD));
-					center.translate(x,y);
-					corner.translate(x,y);
-					updateLoopTransform = true;
-					loopTransform = tmp_trans;
-					loopback.setFrameFromCenter(center, corner);
-					shape = loopTransform.createTransformedShape(loopback);
-				}
-				else 
-					ExpCoordinator.print(new String(onlComponent.getLabel() + "::LinkGraphic.setBounds transform same"), 6);
-				ExpCoordinator.print(new String(onlComponent.getLabel() + "::LinkGraphic.setBounds loopback(" + loopback.getX() + ", " + loopback.getY() + ", " + loopback.getWidth() + ", " + loopback.getHeight() +") p1(" + p1.getX() + ", " + p1.getY() + ") theta = " + theta), 6);
-			}
+			//ONLComponent onlcomp = point1.getONLComponent();
+			//Point center = null;
 		}
 		else
 		{

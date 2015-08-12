@@ -45,6 +45,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.awt.Color;
 import javax.xml.stream.*;
+
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
@@ -871,7 +872,7 @@ public class HWTable extends ONLCTable implements Field.Owner,HWTableElement.Lis
 			if (tcs.isAdd())
 			{
 				actions.add(new AddAction(this, tcs));
-				actions.add(new UpdateAction(this));
+				if (tcs.hasUpdate()) actions.add(new UpdateAction(this));
 			}
 			else
 			{
@@ -975,8 +976,10 @@ public class HWTable extends ONLCTable implements Field.Owner,HWTableElement.Lis
 		rtn.addListener(this);
 		if (rtn != null)
 		{
+			HWTableElement.TableCommand cmd = rtn.getCommand(getAddElemSpec());
 			ExpCoordinator.print(new String("HWTable(" + getLabel() + ").addNewElement element:" + rtn.toString() + " elementGiven:" + elem.toString()), TEST_HWTABLE);
-			expCoordinator.addEdit(new HWTableElement.AddEdit(rtn, (HWTableElement.TableCommand)rtn.getCommand(getAddElemSpec()), expCoordinator.getCurrentExp()));
+			expCoordinator.addEdit(new HWTableElement.AddEdit(rtn, cmd, expCoordinator.getCurrentExp()));
+
 		}
 		//if (rtn != null && ExpCoordinator.isRecording())
 		//ExpCoordinator.recordEvent(SessionRecorder.ADD_FILTER, new String[]{port.getLabel(), fd.getRecordedString()});
@@ -1162,6 +1165,9 @@ public class HWTable extends ONLCTable implements Field.Owner,HWTableElement.Lis
 				}
 			}
 		}
+		else
+			ExpCoordinator.print(new String("HWTable(" + getLabel() + ").removeGeneratedElements list empty"), Topology.TEST_DEFRTS);
+		
 	}
 	public void createTableModel()
 	{

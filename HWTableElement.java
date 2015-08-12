@@ -56,7 +56,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 
 
 	public static final int TEST_FIELD = 3;
-	public static final int TEST_DISPLAY = 7;
+	public static final int TEST_DISPLAY = 3;
 	public static final int TEST_ENABLE = 3;
 	public static final int TEST_LOAD = 5;
 	public static final int TEST_NHLISTENER = Topology.TEST_DEFRTS;
@@ -340,6 +340,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 	public static class TableCommandSpec extends CommandSpec
 	{
 		private String optype = null;
+		private boolean add_update = true;
 
 		/////////////////////////////////////////// HWTableElement.TableCommandSpec.XMLHandler ///////////////////////////////////
 		protected static class XMLHandler extends CommandSpec.XMLHandler
@@ -387,17 +388,20 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 			super(uri, attributes, cmdtp);
 			//tableSpec = ts;
 			if (o != null) optype = new String(o);
+			if (attributes.getValue(ExperimentXML.NO_UPDATE)!= null) add_update = false;
 		}
 		public TableCommandSpec(TableCommandSpec cspec) 
 		{
 			super(cspec);
 			//tableSpec = cspec.tableSpec;
 			optype = new String(cspec.optype);
+			add_update = cspec.add_update;
 			//updateDefaults();
 		}
 		public ContentHandler getXMLHandler(XMLReader xmlr, ContentHandler hwh) { return (new HWTableElement.TableCommandSpec.XMLHandler(xmlr, hwh, this));}
 		public boolean isAdd() { return (optype.equals(ExperimentXML.ADD_ELEM));}
 		public boolean isDelete() { return (optype.equals(ExperimentXML.DELETE_ELEM));}
+		public boolean hasUpdate() { return add_update;}
 		public void setOptype(String s) { optype = new String(s);}
 		public String getOpType() { return optype;}
 		public boolean isParamEditable(int i) { return (getParam(i).isEditable());}
@@ -429,7 +433,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 			this(cspec.templateSpec, c, e);
 			//tableSpec = cspec.tableSpec;
 			ExpCoordinator.print(new String("HWTableElement.TableCommand params:" + params.size() + " table " +  c), TEST_LOAD);
-			cspec.print(TEST_LOAD);
+			cspec.templateSpec.print(TEST_LOAD);
 			setCurrentValues(cspec.getCurrentValues());
 			//updateDefaults();
 		}
@@ -463,6 +467,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 		public String getOpType() { return optype;}
 		public Command getCopy(ONLComponent parent, Object[] defaults)
 		{
+			ExpCoordinator.print(new String("HWTableElement.getCopy templateSpec:" + templateSpec), TEST_LOAD);
 			TableCommand rtn = new TableCommand(this, (HWTable)parent, (HWTableElement)getFieldOwner());
 			if (defaults != null) rtn.setDefaults(defaults);
 			return rtn;
@@ -538,7 +543,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 		public void setCurrentElement(String s) { currentElement = new String(s);}
 		public String getCurrentElement() { return currentElement;}
 		public void endElement(String uri, String localName, String qName)
-		{
+		{ 
 			if (localName.equals(ExperimentXML.FIELD)) 
 			{
 				currentField = null;
@@ -546,10 +551,12 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 			if (localName.equals(ExperimentXML.ELEMENT)) 
 			{
 				expXML.removeContentHandler(this);
-				if (add) hwtable.addNewElement(tableElement, false);
+				if (add && (hwtable.getElement(tableElement) == null)) hwtable.addNewElement(tableElement, false);
+				else add = false; //indicate that this was not added to the table this is necessary for the batch commands
 			}
 		}
 		public void setAdd(boolean b) { add = b;}
+		public boolean isAdded() { return add;}
 	}
 	/////////////////////////////////////////// HWTableElement.Edit ///////////////////////////////////////////////////////////////////
 	
@@ -658,6 +665,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 		{
 			super(elem, cspec, vals, exp);
 			setCanUndo(true);
+			setCommandOpEdit();
 		}
 		public void undo() throws CannotUndoException
 		{
@@ -1019,18 +1027,23 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 	public int getNumFields() { return (properties.getPropertyInt(ExperimentXML.NUMFIELDS));}
 	public HWTableElement.TableCommand getCommand(CommandSpec ts)
 	{
+		//ExpCoordinator.print(new String("HWTableElement.TableCommand.getCommand " + ts), HWTable.TEST_HWTABLE);
 		if (ts == null) return null;
 		else return (getCommand(ts.getOpcode()));
 	}
 	public HWTableElement.TableCommand getCommand(int opcode)
 	{
 		int max = commands.size();
-		ExpCoordinator.print(new String("HWTable.Element.getCommand " + toString()), HWTable.TEST_HWTABLE);
+		ExpCoordinator.print(new String("HWTable.Element.getCommand(" + opcode + ") "+ toString()), HWTable.TEST_HWTABLE);
 		HWTableElement.TableCommand elem;
 		for (int i = 0; i < max; ++i)
 		{
 			elem = (HWTableElement.TableCommand)commands.elementAt(i);
-			if (opcode == elem.getOpcode()) return elem;
+			if (opcode == elem.getOpcode()) 
+				{
+					ExpCoordinator.print(new String("HWTable.Element.getCommand " + elem.toString()), HWTable.TEST_HWTABLE);
+					return elem;
+				}
 		}
 		return null;
 	}

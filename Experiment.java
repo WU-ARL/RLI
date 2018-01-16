@@ -848,6 +848,12 @@ public class Experiment //implements MenuFileAction.Saveable
 			//pwdialog.getContentPane().add(tf);
 			ExpCoordinator.getMainWindow().getJMenuBar().add(pwdTextField);
 		}
+		else 
+		{
+			ExpCoordinator.getMainWindow().getJMenuBar().remove(pwdTextField);
+			pwdTextField = null;
+			ExpCoordinator.getMainWindow().getJMenuBar().repaint();
+		}
 		ExpCoordinator.getMainWindow().getJMenuBar().revalidate();
 		//if (!pwdialog.isVisible()) pwdialog.setVisible(true);
 	}

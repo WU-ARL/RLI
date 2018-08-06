@@ -1970,6 +1970,8 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 	protected void setIndex() //router name should be some label followed by an index
 	{
 		String tmp = getLabel();
+		int i = tmp.indexOf(".");
+		if (i >= 0) tmp = tmp.substring(i);
 		String ndx = tmp.replaceAll("[^0-9]", "");
 		ExpCoordinator.print(new String("Hardware(" +  tmp + ").setIndex " + ndx), 2);
 		if (ndx.length() > 0) setProperty(INDEX, ndx);

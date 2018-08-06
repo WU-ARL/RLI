@@ -57,7 +57,7 @@ public class Command extends CommandSpec
 
 		public void startElement(String uri, String localName, String qName, Attributes attributes) 
 		{
-			ExpCoordinator.print(new String("CommandSpec.XMLHandler.startElement localName:" + localName), ExperimentXML.TEST_XML);
+			ExpCoordinator.print(new String("Command.CContentHandler.startElement localName:" + localName), ExperimentXML.TEST_XML);
 			currentElement = new String(localName);
 			if (localName.equals(ExperimentXML.PARAM)) 
 			{
@@ -67,7 +67,7 @@ public class Command extends CommandSpec
 		}
 		public void endElement(String uri, String localName, String qName)
 		{
-			ExpCoordinator.print(new String("Command.XMLHandler.endElement " + localName), ExperimentXML.TEST_XML);
+			ExpCoordinator.print(new String("Command.CContentHandler.endElement " + localName), ExperimentXML.TEST_XML);
 			if (localName.equals(command.getXMLElemName()))//ExperimentXML.COMMAND) || localName.equals(ExperimentXML.UPDATE_COMMAND))
 			{
 				command.print(ExperimentXML.TEST_XML);
@@ -133,7 +133,7 @@ public class Command extends CommandSpec
 		public boolean getCancelled() { return cancelled;}
 		protected void setCommandOp(Command.NCCPOp op) { commandOp = op;}
 		protected Command.NCCPOp getCommandOp() { return commandOp;}
-		protected void setCommandOpEdit() { commandOp.setEdit(this);}
+		protected void setCommandOpEdit() { if (commandOp != null) commandOp.setEdit(this);}
 		public Command getBatchCommand() { return batchCommand;}
 	}//end class Command.Edit
 

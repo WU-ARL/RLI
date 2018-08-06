@@ -607,12 +607,12 @@ public class Topology
 			ExpCoordinator.print(new String("Topology.addSubnetRoute for  " + subnet.toString()), TEST_DEFRTS);
 
 			if (port.isRouter() && (port.getParent() instanceof Hardware))
-			    ((Hardware)port.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
+				((Hardware)port.getParent()).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
 			else 
-			    {
+			{
 				if (port instanceof Hardware.Port)
-				    ((Hardware.Port)port).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
-			    }
+					((Hardware.Port)port).addGeneratedRoute(sn.getBaseIP().toString(), sn.getNetmask().getBitlen(), portid, nhip);
+			}
 		}
 	}
 	public void clearRoutes()
@@ -686,7 +686,7 @@ public class Topology
 			sd.setProperty(ONLComponent.REF_NUM, getNextRefNum(sd.getReference()));
 			ExpCoordinator.print(new String("Topology.addComponent " + sd.getLabel() + " setting ref from " + old_ref + " to " + sd.getReference()), 6);
 			added = cl.addComponent(sd);
-			if (added) return sd;
+			return sd;
 		}
 		return null;
 	}
@@ -858,6 +858,13 @@ public class Topology
 	protected int getNewRouterIndex()
 	{
 		int x = 1;
+		String tmp_str = "";
+		for (int i = 0; i < nodes.size(); ++i)
+		{
+			tmp_str = tmp_str.concat(nodes.onlComponentAt(i).getProperty(Hardware.INDEX) + " ");
+		}
+		ExpCoordinator.print(new String("Topology.getNewRouterIndex num nodes " + nodes.size() + " indices " + tmp_str), 1);
+
 		while (getRouter(x) != null)
 		{
 			++x;

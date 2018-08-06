@@ -41,6 +41,7 @@ public class Field extends Param
 	private Field.Owner owner = null;
 	private EventListenerList listeners = null;
 	private IDAssigner.ID assignedDefault = null;
+	private boolean entryKey = true;
 
 	//////////////////////////////////////////////////// Field.FContentHandler ///////////////////////////////////////////////
 	protected static class FContentHandler extends Param.PContentHandler
@@ -325,6 +326,7 @@ public class Field extends Param
 		listeners = new EventListenerList();
 		id = f.id;
 		owner = f.owner;
+		entryKey = f.entryKey;
 		/*REMOVED 8/20/10
 		if (f.updateAction != null)
 		{
@@ -341,6 +343,7 @@ public class Field extends Param
 		super((ParamSpec)fs, pc, null);
 		listeners = new EventListenerList();
 		id = fs.id;
+		entryKey = fs.entryKey;
 		if (o == null && pc instanceof Field.Owner)
 			owner = (Field.Owner)pc;
 		else owner = o;
@@ -451,4 +454,5 @@ public class Field extends Param
 		if (defaultValue != null && defaultValue instanceof NextHop) ((NextHop)defaultValue).removeListener();
 		if (assignedDefault != null) assignedDefault.clear();
 	}
+	public boolean isEntryKey() { return entryKey;}
 }

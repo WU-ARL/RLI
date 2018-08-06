@@ -449,7 +449,7 @@ public class MonitorManager implements MenuFileAction.Saveable//, Mode.Manager
 			else return false;
 		}
 		public void setType(int t) { type = t;}
-		public int getType() { return type;}
+		public int getDType() { return type;}
 
 		//public interface MonitorFunction 
 		public void addData(MonitorPlus nd){}

@@ -389,12 +389,12 @@ public class SpecFile //saves(loads) one or more graphs to(from) a file
 	  {
 	    Graph graph = (Graph) display;
 	    writer.writeLine(new String(graph.xlabel.getText() + " " + graph.ylabel.getText()));
-	    writer.writeLine(new String(graph.getType() + " " + graph.yaxis.getUnits()) );
+	    writer.writeLine(new String(graph.getDType() + " " + graph.yaxis.getUnits()) );
 	  }
 	else
 	  {
 	    writer.writeLine("");
-	    writer.writeLine(String.valueOf(display.getType()));
+	    writer.writeLine(String.valueOf(display.getDType()));
 	  }
       }
 

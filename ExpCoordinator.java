@@ -47,8 +47,8 @@ import org.xml.sax.*;
 
 public class ExpCoordinator //implements Mode.MListener
 {
-	public static final double VERSION = 8.4;
-	public static final int VERSION_BYTES = 0x8400; //& with ops to add version
+	public static final double VERSION = 8.6;
+	public static final int VERSION_BYTES = 0x8600; //& with ops to add version
 	public static PrintMessage printer = null;
 	public static ExpCoordinator theCoordinator = null;
 	public static final int NEW = 0;
@@ -970,9 +970,18 @@ public class ExpCoordinator //implements Mode.MListener
 			hwmanager.addFromResource("IXP", "IXP.hw");
 			hwmanager.addFromResource("PC1core", "PC1core.hw");
 			hwmanager.addFromResource("PC2core", "PC2core.hw");
+			hwmanager.addFromResource("PC8core1g", "PC8core1g.hw");
+			hwmanager.addFromResource("PC8core10g", "PC8core10g.hw");
+			hwmanager.addFromResource("VM", "VM.hw");
 			hwmanager.addFromResource("PC48core", "PC48core.hw");
+			hwmanager.addSubtypeFromResource("VMsmall.shw");
+			hwmanager.addSubtypeFromResource("VM64bit.shw");
+			hwmanager.addSubtypeFromResource("VM64bit_2port.shw");
 			hwmanager.addSubtypeFromResource("HOST1core.shw");
 			hwmanager.addSubtypeFromResource("HOST2core.shw");
+			hwmanager.addSubtypeFromResource("SWR5_1.shw");
+			hwmanager.addSubtypeFromResource("SWR8.shw");
+			hwmanager.addSubtypeFromResource("SWR16.shw");
 			hwmanager.addSubtypeFromResource("HOST48core.shw");
 			hwmanager.addSubtypeFromResource("NPR.shw");
 			HardwareSpec ixp_spec = hwmanager.getHardware("IXP");
@@ -1027,6 +1036,16 @@ public class ExpCoordinator //implements Mode.MListener
 				hwmanager.addSubtype(s_list[j]);
 			}   
 		}
+
+        Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            @Override
+            public void run()
+            {
+                System.out.println("Shutdown hook ran!");
+            	if (currentExperiment != null) currentExperiment.close();
+            }
+        });
 	}
 
 	public void initializeTopologyActions()

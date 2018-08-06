@@ -72,6 +72,7 @@ public class ExperimentXML extends DefaultHandler
 	public static final String ELEM_OPS = "elementOperations";
 	public static final String ENABLED = "enabled";
 	public static final String ENDPOINT = "endpoint";
+	public static final String ENTRYKEY = "entryKey";
 	public static final String EXBITS = "exceptionBits";
 	public static final String EXMASK = "exceptionMask";
 	public static final String EXP = "Experiment";

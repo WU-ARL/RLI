@@ -138,7 +138,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 	private Cluster.Instance cluster = null;
 	protected SubnetManager.Subnet subnet = null;
 	private SubnetManager.Subnet originalSubnet = null;
-	
+
 	private Color iconColor = null;
 	private Dimension iconSize = null;
 
@@ -237,7 +237,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 					component = expXML.getExperiment().getTopology().getONLComponent(new String(ch, start, length), typeName);
 				else
 					component = topology.getONLComponent(new String(ch, start, length), typeName);
-				
+
 			}
 		}
 		public void setCurrentElement(String s) { currentElement = new String(s);}
@@ -588,13 +588,13 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 			onlComponent = c;
 		}
 		public void connectionFailed(NCCPConnection.ConnectionEvent e)
-	    {
+		{
 			if (ExpCoordinator.isSPPMon())
 			{
 				String msg = new String(onlComponent.getLabel() + ": connection failed");
 				ExpCoordinator.theCoordinator.addError(new StatusDisplay.Error(msg, msg, msg, (StatusDisplay.Error.STATUSBAR | StatusDisplay.Error.LOG)));
 			}
-	    }
+		}
 		public void connectionClosed(NCCPConnection.ConnectionEvent e) {}
 		public void connectionOpened(NCCPConnection.ConnectionEvent e)
 		{
@@ -674,9 +674,9 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		{
 			int m = 1;
 			String interfaceType = getInterfaceType();
-			
+
 			if (interfaceType.endsWith("G")) m = 1000;
-		    int end = interfaceType.length() - 1;
+			int end = interfaceType.length() - 1;
 			int rtn = Integer.parseInt(interfaceType.substring(0,end));
 			rtn = rtn * m;
 			return rtn;
@@ -723,7 +723,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 			}
 			if (isSwitch()) getParent().setSubnet(s);// && originalSubnet == null) originalSubnet = s;
 		}	
-		
+
 		public SubnetManager.Subnet getSubnet() 
 		{ 
 			if (isSwitch()) return (getParent().getSubnet());
@@ -1319,7 +1319,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		}
 		if (linkedTo == null || !linkedTo.isRouter()) setProperty(PortBase.NEXTHOP, "0.0.0.0");
 		else setProperty(PortBase.NEXTHOP, linkedTo.getIPAddr().toString());
-		
+
 		if (linkedTo != null && !second_lnk)
 		{
 			/*//SUBNET:remove
@@ -1339,7 +1339,7 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		//if (olnk != linkedTo)
 		//{
 		//}
-	
+
 	}  
 	public void removeLink(LinkDescriptor lnk) 
 	{
@@ -1813,9 +1813,9 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 	{
 		//if (isSwitch())
 		//{
-			if (sn != null) addToDescription(ONLComponent.SUBNET, new String("subnet:" + sn.getBaseIP() + "/" + sn.getNetmask()));//+ sn.getIndex()));
-			if (originalSubnet == null) setOriginalSubnet(sn);
-			subnet = sn;
+		if (sn != null) addToDescription(ONLComponent.SUBNET, new String("subnet:" + sn.getBaseIP() + "/" + sn.getNetmask()));//+ sn.getIndex()));
+		if (originalSubnet == null) setOriginalSubnet(sn);
+		subnet = sn;
 		//}
 	}
 	protected SubnetManager.Subnet getSubnet() { return subnet;}
@@ -1834,4 +1834,5 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		else return "";
 	}
 	protected void setUserLabel(String s) { setProperty(ExperimentXML.USER_LABEL, s);}
+
 }

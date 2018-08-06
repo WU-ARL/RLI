@@ -552,7 +552,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 			{
 				expXML.removeContentHandler(this);
 				if (add && (hwtable.getElement(tableElement) == null)) hwtable.addNewElement(tableElement, false);
-				else add = false; //indicate that this was not added to the table this is necessary for the batch commands
+				//else add = false;
 			}
 		}
 		public void setAdd(boolean b) { add = b;}
@@ -1072,7 +1072,7 @@ public class HWTableElement implements ONLCTable.Element,IDAssigner.IDable,Field
 		int max = getNumFields();
 		for (int i = 0; i < max; ++i)
 		{
-			if (!fields[i].isEqual(elem.fields[i])) 
+			if (fields[i].isEntryKey() && (!fields[i].isEqual(elem.fields[i]))) 
 			{
 				ExpCoordinator.print(new String("        field:" + fields[i].label + " != elem.field:" + elem.fields[i].label), HWTable.TEST_HWTABLE);
 				return false;

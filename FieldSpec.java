@@ -30,6 +30,7 @@ public class FieldSpec extends ParamSpec
 	int id = 0;
 	UpdateCommandSpec updateCommand = null;
 	AssignerSpec assigner = null;
+	boolean entryKey = true;
 
 	////////////////////////////////////////////////  FieldSpec.UpdateCommandSpec /////////////////////////////////////////////
 	protected static class UpdateCommandSpec extends CommandSpec
@@ -118,6 +119,8 @@ public class FieldSpec extends ParamSpec
 			//if (currentElement.equals(ExperimentXML.FIELDLOCALE)) ((FieldSpec)currentParam).setLocale(new String(ch, start, length));
 			if (currentElement.equals(ExperimentXML.HWASSIGN) || currentElement.equals(ExperimentXML.PORTASSIGN) || currentElement.equals(ExperimentXML.TABLEASSIGN))
 				((FieldSpec)currentParam).assigner.setName(new String(ch, start, length));
+			if (currentElement.equals(ExperimentXML.ENTRYKEY))
+				((FieldSpec)currentParam).entryKey = Boolean.parseBoolean(new String(ch, start, length));
 
 		}
 		public void endElement(String uri, String localName, String qName)
@@ -142,6 +145,7 @@ public class FieldSpec extends ParamSpec
 		if (p.updateCommand != null)
 			updateCommand = new UpdateCommandSpec(p.updateCommand, this);
 		if (p.assigner != null) assigner = new AssignerSpec(p.assigner);
+		entryKey = p.entryKey;
 	}
 	public Field createField(ONLComponent parent)
 	{
@@ -166,4 +170,5 @@ public class FieldSpec extends ParamSpec
 	public ContentHandler getXMLHandler(XMLReader xmlr, ContentHandler hwh) { return (new XMLHandler(xmlr, hwh, this));}
 	public FieldSpec.AssignerSpec getAssigner() { return assigner;}
 	public boolean isAssigned() { return (assigner != null);}
+	public boolean isEntryKey() { return entryKey;}
 } //end class FieldSpec

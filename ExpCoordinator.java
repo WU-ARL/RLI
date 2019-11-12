@@ -42,6 +42,7 @@ import java.awt.*;
 import java.lang.reflect.Array;
 import java.beans.PropertyChangeListener;
 import java.io.*;
+
 import org.xml.sax.helpers.*;
 import org.xml.sax.*;
 
@@ -119,6 +120,7 @@ public class ExpCoordinator //implements Mode.MListener
 	public static final String DEFAULT_DIR = "default_dir";
 	public static final String DEFAULT_POLLING = "default_polling";
 	public static final String SPPMON = "sppmon";
+	public static final String NOGUI = "nogui";
 
 	private static final String PROP_FILE = ".onlprops";
 
@@ -871,6 +873,10 @@ public class ExpCoordinator //implements Mode.MListener
 			{
 				properties.setProperty(SPPMON, true);
 			}
+			if (args[i].startsWith("-nogui"))
+			{
+				properties.setProperty(NOGUI, true);
+			}
 			if (args[i].startsWith("-title"))
 			{
 			    title = args[++i];
@@ -955,8 +961,8 @@ public class ExpCoordinator //implements Mode.MListener
 
 		if (!sppmon && isTestLevel(EXTRAS)) mainWindow.addMenu(extraActions, "Extras");
 
-
-		mainWindow.setVisible(true);
+		if (!properties.getPropertyBool(NOGUI))
+			mainWindow.setVisible(true);
 
 
 		DisplayMode dmode = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
@@ -1046,6 +1052,9 @@ public class ExpCoordinator //implements Mode.MListener
             	if (currentExperiment != null) currentExperiment.close();
             }
         });
+
+		if (properties.getPropertyBool(NOGUI))
+			;//need to put something in that keeps this alive without the main window.
 	}
 
 	public void initializeTopologyActions()
@@ -1066,34 +1075,6 @@ public class ExpCoordinator //implements Mode.MListener
 				}
 			});
 			topologyActions.add(new ExpPasswordAction());
-			//topologyActions.add(new Topology.TopologyAction("Set Subnet Allocation") {
-				//public void actionPerformed(ActionEvent e)
-				//{
-					//final String opt0 = "OK";
-					//final String opt1 = "Cancel";
-					//Object[] options = {opt0,opt1};
-					//JCheckBox cbox = new JCheckBox("Use Old Subnet Allocation:", isOldSubnet());
-					//int rtn = JOptionPane.showOptionDialog(getMainWindow(),  
-					//		cbox, 
-					//		null,
-					//		JOptionPane.YES_NO_OPTION,
-					//		JOptionPane.QUESTION_MESSAGE, 
-					//		null,
-					//		options,
-					//		options[0]);
-
-				//	if (rtn == JOptionPane.YES_OPTION)
-				//	{
-				//		setOldSubnet(cbox.isSelected());
-			    //	}
-				//}
-				//public boolean isEnabled() 
-				//{
-				//	if (topology.getNumComponents() > 0 || isTopoSet()) return false;
-				//	else return (super.isEnabled());
-				//}
-			//});
-			//topologyActions.add(new Topology.AddLinkAction(topology));
 			topologyActions.add(new AddVGigEAction(this));
 		}
 		topologyActions.add(new Topology.AddHWTypeAction());
@@ -1407,7 +1388,7 @@ public class ExpCoordinator //implements Mode.MListener
       }
 		 */
 	}
-	private void setCurrentExp(java.io.File f)
+	public void setCurrentExp(java.io.File f)
 	{
 		closeCurrentExp();
 		if (f != null) 
@@ -1559,6 +1540,8 @@ public class ExpCoordinator //implements Mode.MListener
 	{
 		//print(new String("ExpCoordinator.getUserInfo(" + ttl + ") password:" + properties.getProperty(PASSWORD)), 6);
 	    if (properties.getProperty(PASSWORD) != null && !isTestLevel(ASK_FOR_USER)) return;
+	    //if (properties.getProperty(PASSWORD) == null)
+	    	//	print(new String("password not set"));
 
 		TextFieldwLabel uname = new TextFieldwLabel(30, "User Name:");
 		if (properties.getProperty(USERNAME) != null) 
@@ -1751,7 +1734,10 @@ public class ExpCoordinator //implements Mode.MListener
 		}
 		catch(java.io.IOException e){}
 	}
-
+	public void commit()
+	{
+		onlUndoManager.commit();
+	}
 	public static boolean isAdvanced() { return (theCoordinator.properties.getPropertyBool(ADVANCED));}
 	public static boolean isOldSubnet() { return oldSubnet;}
 	protected static void setOldSubnet(boolean b) { oldSubnet = b;}

@@ -747,8 +747,10 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 	}
 
 	public boolean isCurrentEdit(ONLComponent.Undoable e) { return (uncommittedEdits.isCurrentEdit(e));}
-	protected void commit() 
+	public void commit() 
 	{
+		if (commitAction.isEnabled())
+			commitAction.setEnabled(false);
 		System.out.println("OUM.commit uncommitted edits = " + uncommittedEdits.size());
 		if (uncommittedEdits.size() > 0)
 		{

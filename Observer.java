@@ -1034,6 +1034,7 @@ public class Observer implements MonitorManager.Listener, Experiment.Listener, O
       odaemon.sendMessage(new CommitResponse(b));
     ExpCoordinator.print(new String("Observer.setCommit " + b), 8);
   }
+  public void commitCompleted(String msg){}
   //end StatusDisplay.Listener
   public void experimentChanged(Experiment.Event e) //Experiment.Listener
   {

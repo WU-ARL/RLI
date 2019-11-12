@@ -72,11 +72,20 @@ class Reservation implements NCCPConnection.ConnectionListener
 		public boolean isReserved();
 	}
 
+	////////////////////////////////////////////// Reservation.Reservable interface /////////////////////////////////////////////////////////////////////
+	public interface ReservationResponder
+	{
+		public void processSuccess(double errorcode, Date d);
+		public void processError(double errorcode, String errormsg, Date d);
+	}
+	
 	/////////////////////////////////////////////////////// NCCPRequest ///////////////////////////////////////////////////////////////////////
 	private class NCCPRequest extends ExpRequest
 	{
-		private Vector topologyRequests;
+		private Vector<Reservable> topologyRequests;
 		private String ref_id = "";
+		private ReservationResponder rresponder = null;
+		
 		///////////////////////////////////////////////  NCCP_Requester /////////////////////////////////////////////////////////////
 		private class NCCP_Requester extends ExpRequest.RequesterBase
 		{
@@ -85,6 +94,7 @@ class Reservation implements NCCPConnection.ConnectionListener
 				super(ExpDaemon.NCCP_Operation_ReservationRequest, true);
 				setMarker(new REND_Marker_class(ExpDaemon.NCCP_Operation_ReservationRequest, getNextIndex()));
 			}
+			
 
 			public void storeData(DataOutputStream dout) throws IOException
 			{
@@ -167,21 +177,28 @@ class Reservation implements NCCPConnection.ConnectionListener
 		{
 			request = req;
 			response = new NCCP_Response();
-			topologyRequests = new Vector();
+			topologyRequests = new Vector<Reservable>();
 		}
 
 		public NCCPRequest(NCCPExtensionReq req)
 		{
 			request = req;
 			response = new NCCP_Response();
-			topologyRequests = new Vector();
+			topologyRequests = new Vector<Reservable>();
 		}
 
 		public NCCPRequest()
 		{
 			request = new NCCP_Requester();
 			response = new NCCP_Response();
-			topologyRequests = new Vector();
+			topologyRequests = new Vector<Reservable>();
+		}
+		
+
+		public NCCPRequest(ReservationResponder rr)
+		{
+			this();
+			rresponder = rr;
 		}
 
 		public void processResponse(NCCP.ResponseBase r)
@@ -189,13 +206,15 @@ class Reservation implements NCCPConnection.ConnectionListener
 			boolean remove = true;
 			int i =0;
 			int max = 0;
+			Date d = null;
+			String errormsg = "";
 			if (r.getStatus() == NCCP.Status_Fine) 
 			{
-				Date d = ((NCCP_Response)r).getStartTime();
+				d = ((NCCP_Response)r).getStartTime();
 
 				//check requests were all answered
 				//remove all requests from ExpCoordinator
-				Vector failedRequests = new Vector();
+				Vector<Reservable> failedRequests = new Vector<Reservable>();
 				max = topologyRequests.size();
 				Reservable req;
 				for (i = 0; i < max; ++i)
@@ -206,46 +225,65 @@ class Reservation implements NCCPConnection.ConnectionListener
 				}
 				if (failedRequests.size() > 0)
 				{
+					errormsg = "Incomplete Topology Reserved.";
 					JOptionPane.showMessageDialog(expCoordinator.getMainWindow(), 
-							new Object[]{"Incomplete Topology Reserved."},
+							new Object[]{errormsg},
 							"Reservation Error",
 							JOptionPane.ERROR_MESSAGE);
 					failedRequests.clear();
+
+					if (rresponder != null)
+						rresponder.processError(r.getStatus(), errormsg, d);
 				}
 				topologyRequests.clear();
 
 				if (request instanceof NCCPExtensionReq)
 				{
-					JOptionPane.showMessageDialog(expCoordinator.getMainWindow(), 
-							new Object[]{((NCCP_Response)r).getErrorMessage()},
+					errormsg = ((NCCP_Response)r).getErrorMessage();
+					JOptionPane.showMessageDialog(ExpCoordinator.getMainWindow(), 
+							new Object[]{errormsg},
 							"Reservation",
 							JOptionPane.PLAIN_MESSAGE);
 				}
 				else if (request instanceof NCCPCancelReq)
 				{
-					JOptionPane.showMessageDialog(expCoordinator.getMainWindow(), 
+					errormsg = ((NCCP_Response)r).getErrorMessage();
+					JOptionPane.showMessageDialog(ExpCoordinator.getMainWindow(), 
 							new Object[]{((NCCP_Response)r).getErrorMessage()},//"Cancel Reservation Succeeded"},
 							"Reservation",
 							JOptionPane.PLAIN_MESSAGE);
 				}
 				else
 				{
+					errormsg = ((NCCP_Response)r).getErrorMessage();
 					String date_time = "";
-					if (d != null) date_time = DateFormat.getDateTimeInstance().format(d);
-					JOptionPane.showMessageDialog(expCoordinator.getMainWindow(), 
-							new Object[]{((NCCP_Response)r).getErrorMessage(), (new String("Reservation starts " + date_time))},
-							"Reservation",
-							JOptionPane.PLAIN_MESSAGE);
+					if (rresponder != null)
+						rresponder.processSuccess(r.getStatus(), d);
+					else
+					{
+						if (d != null) date_time = DateFormat.getDateTimeInstance().format(d);
+						JOptionPane.showMessageDialog(ExpCoordinator.getMainWindow(), 
+								new Object[]{((NCCP_Response)r).getErrorMessage(), (new String("Reservation starts " + date_time))},
+								"Reservation",
+   							    JOptionPane.PLAIN_MESSAGE);
+					}
 				}
 			}
 			else
 			{
 				if ((((NCCP_Response)r).getErrorCode() & AUTH_ERR) > 0)
 				{
-					expCoordinator.clearPassword();
-					expCoordinator.getUserInfo("Authentication Failure");
-					remove = false;
-					expCoordinator.sendRequest(this);
+					if (rresponder == null)
+					{
+						expCoordinator.clearPassword();
+						expCoordinator.getUserInfo("Authentication Failure");
+						remove = false;
+						expCoordinator.sendRequest(this);
+					}
+					else
+					{	
+						rresponder.processError(r.getStatus(), "Authentication Failure", null);
+					}
 				}
 				else
 				{
@@ -299,12 +337,23 @@ class Reservation implements NCCPConnection.ConnectionListener
 						expCoordinator.sendMessage(new NCCP_EndReservationReq(ref_id));
 					}
 					else
-						JOptionPane.showMessageDialog(expCoordinator.getMainWindow(), 
-								new Object[]{((NCCP_Response)r).getErrorMessage()},
-								"Reservation Error",
-								JOptionPane.ERROR_MESSAGE);
+					{
+						errormsg = ((NCCP_Response)r).getErrorMessage();
+						if (rresponder != null)
+						{
+							rresponder.processError(r.getStatus(), errormsg, null);
+						}
+						else
+						{
+							JOptionPane.showMessageDialog(expCoordinator.getMainWindow(), 
+									new Object[]{errormsg},
+									"Reservation Error",
+									JOptionPane.ERROR_MESSAGE);
+						}
+					}
 				}
 			}
+
 			if (remove || (request instanceof NCCPCancelReq))
 				expCoordinator.removeRequest(this);
 		}
@@ -662,6 +711,15 @@ class Reservation implements NCCPConnection.ConnectionListener
 			print(2);
 			sendRequest(new NCCPRequest());
 		}
+	}
+	public void getReservation(GregorianCalendar early, int range, double dur, ReservationResponder rr)
+	{
+		earlyStartTime.setTime(early.getTime());
+		lateStartTime.setTime(earlyStartTime.getTime());
+		lateStartTime.add(Calendar.MINUTE, range); 
+		duration = dur; 
+		print(2);
+		sendRequest(new NCCPRequest(rr));
 	}
 	public void cancelReservation() 
 	{

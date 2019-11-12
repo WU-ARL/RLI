@@ -72,7 +72,9 @@ public class MonitorManager implements MenuFileAction.Saveable//, Mode.Manager
 	private AddDisplayAction addDisplayAction = null;
 	private MenuFileAction saveFileAction = null;
 	private MenuFileAction loadFileAction = null;
-	private int fontSize = 9; //this sets the label font
+	private int fontSize = 9; //this sets the label font for legend
+	private int axisFontSize = 12; //this sets the label font axis label
+	private int axisNFontSize = 9; //this sets the label font axis numbers
 
 	private final int showLF = 1;
 	private final int showQ = 2;
@@ -727,6 +729,16 @@ public class MonitorManager implements MenuFileAction.Saveable//, Mode.Manager
 				fontSize = Integer.parseInt(args[++i]);
 				++i;
 			}
+			else if (args[i].compareTo("-afont") == 0)
+			{
+				axisFontSize = Integer.parseInt(args[++i]);
+				++i;
+			}
+			else if (args[i].compareTo("-anfont") == 0)
+			{
+				axisNFontSize = Integer.parseInt(args[++i]);
+				++i;
+			}
 			else ++i;
 		}
 		//add Monitor dependent menu
@@ -1201,6 +1213,8 @@ public class MonitorManager implements MenuFileAction.Saveable//, Mode.Manager
 	public LogFileRegistry getLFRegistry() { return logFileRegistry;}
 	public boolean backgroundOn() { return ((type & BACKGROUNDOFF) == 0);}
 	public int getFontSize() { return fontSize;}
+	public int getAxisFontSize() { return axisFontSize;}
+	public int getAxisNFontSize() { return axisNFontSize;}
 	public boolean isARL() { return ((type & ARL) > 0);}
 	public Action getAddDisplayAction() { return addDisplayAction;}
 	public Action getSaveFileAction() { return saveFileAction;}

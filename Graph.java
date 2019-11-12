@@ -842,7 +842,7 @@ public abstract class Graph extends MonitorManager.Display implements Zoom.Zooma
 		//setBackground(bg);
 		//setForeground(fg);	
 		//create and setup y axis label and add to layout
-		ylabel = new Axis.Label(ylbl, false);
+		ylabel = new Axis.Label(ylbl, false, monitorManager.getAxisFontSize());
 		c.gridx = offsetx;
 		c.gridy = offsety;
 		c.gridwidth = 1;
@@ -886,6 +886,7 @@ public abstract class Graph extends MonitorManager.Display implements Zoom.Zooma
 
 		//create and setup x axis label and add to layout
 		xlabel = new JLabel(xlbl);
+		xlabel.setFont(new Font("Dialog", Font.BOLD, monitorManager.getAxisFontSize()));
 		c.fill = GridBagConstraints.NONE;
 		c.gridy = offsety + 2;
 		c.weightx = 0;

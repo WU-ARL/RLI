@@ -58,6 +58,7 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 	{
 		public void errorAdded(StatusDisplay.Error e);
 		public void setCommit(boolean b);
+		public void commitCompleted(String msg);
 	}
 
 	private class ErrorLog extends AbstractAction
@@ -229,6 +230,7 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 				setValue(getMaximum());
 				setString(s);
 				stop();
+				commitCompleted(s);
 			}
 		}
 		public void increaseMax(int i)
@@ -411,6 +413,16 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 		{
 			elem = (StatusDisplay.Listener)listeners.elementAt(i);
 			elem.setCommit(b);
+		}
+	}
+	private void commitCompleted(String s)
+	{
+		int max = listeners.size();
+		StatusDisplay.Listener elem;
+		for (int i = 0; i < max; ++i)
+		{
+			elem = (StatusDisplay.Listener)listeners.elementAt(i);
+			elem.commitCompleted(s);
 		}
 	}
 	public void addListener(StatusDisplay.Listener l)

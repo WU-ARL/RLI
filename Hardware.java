@@ -2739,24 +2739,46 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			if (oLT >= 0) 
 			{
 				reset = false;
-				if (lt >= oLT)
+				if (lt == 0 || (status != NCCP.Status_Fine))
+				    {
+					ExpCoordinator.print("Hardware.NCCP_MonitorResponse.setLT error: - clock time is 0 or status is not fine setting lt to last known positive timestamp");
+					lt = oLT;
+					data = odata;
+					timeInterval = 0;
+					if  (status == NCCP.Status_Fine)
+					    {
+						status = NCCP.Status_TimeoutRemote;//this mimics what I've been seeing but I've had a vodka gimlet. I currently believe I'm the only one reading my comments.
+						ExpCoordinator.print("Hardware.NCCP_MonitorResponse.setLT error: - clock time is 0 and it's saying it's fine. I think that's not really true.");
+					    }
+					this.print();
+					return;
+				    }
+				else if (lt >= oLT)
+				    {
 					timeInterval = (lt - oLT)/clkRate;///1000;
+					ExpCoordinator.print(new String("Hardware.NCCP_MonitorResponse.setLT timeInterval:" + timeInterval), 5);
+				    }
 				else //lt wrapped
 				{
-					ExpCoordinator.print("Hardware.NCCP_MonitorResponse.setLT lt wrapped or reset");
+					ExpCoordinator.print("Hardware.NCCP_MonitorResponse.setLT lt wrapped or reset oLt");
 					timeInterval = 0;
 					if (period != null) timeInterval = period.getSecsOnly();
 					reset = true;
-					//timeInterval = ((maxUnsignedInt() + lt) - oLT);///1000;
+					this.print();
+					//if (lt == 0) //added 9/29/2020
+					//{
+					//ExpCoordinator.print("Hardware.NCCP_MonitorResponse.setLT error: - clock time is 0 setting lt to last known positive timestamp");
+					//	lt = oLT;
+					//  }
 				}
 
 
 				//if we dropped the last response make the reported timeInterval what is expected
-				if (oStatus != NCCP.Status_Fine) 
-				{
-					if (period != null) timeInterval = period.getSecsOnly();
-					else timeInterval = 0;
-				}
+				//if (oStatus != NCCP.Status_Fine) //is this the problem the last one failed if we had zero last time and we get a good one we want to rely on the system clock
+				//{
+				//	if (period != null) timeInterval = period.getSecsOnly();
+				//	else timeInterval = 0;
+				//}
 				realTimeInterval = timeInterval;
 			}
 			else 
@@ -2783,9 +2805,15 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 					ExpCoordinator.print(new String("Hardware.NCCP_MonitorResponse.getData negative data:" + data + " odata:" + odata + " data_change:" + data_change));
 					print();
 				}
-				if (timeInterval <= 0) rtn = (data_change)/otimeInterval;
+				if (timeInterval <= 0)
+				    {
+					if (otimeInterval > 0)
+					    rtn = (data_change)/otimeInterval;
+					else
+					    rtn = 0;
+				    }
 				else
-					rtn = getRate(data_change);
+				    rtn = getRate(data_change);
 				return rtn;
 			}
 		}
@@ -3273,7 +3301,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 					{
 						//System.out.println("  calling monitor");
 						if (!monitor.isStarted()) monitor.start();
-						monitor.setData(r.getData(monitor.getDataType()), ((NCCP.LTDataResponse)r).getTimeInterval());
+						monitor.setData(r.getData(monitor.getDataType()), ((NCCP.LTDataResponse)r).getTimeInterval(), r.getStatus() != NCCP.Status_Fine);
 					}
 				}
 			}

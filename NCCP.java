@@ -679,7 +679,12 @@ public class NCCP
 		{
 			return ((val * 424)/realTimeInterval);
 		}
-		protected double getRate(double val) { return (val/realTimeInterval);}
+		protected double getRate(double val) {
+		    if (realTimeInterval != 0)
+			return (val/realTimeInterval);
+		    else
+			return 0;
+		}
 	}
 
     ////////////////////////////////////////////////////////////////////////////
@@ -753,6 +758,11 @@ public class NCCP
 				if (odata > data) return (getRate(maxUnsignedInt() + (data - odata)));
 				else return (getRate(data - odata));
 			}
+		}
+		public void print(int level)
+		{
+			super.print(level);
+			ExpCoordinator.printer.print(new String(" NCCP.LTDataResponse  (odata, data) = ( " + odata + ", " + data + ")"), level);
 		}
 	}
 

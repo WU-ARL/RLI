@@ -37,13 +37,19 @@ public class NumberPair implements DataPair
 {
   protected double value1;
   protected double value2;
+  protected boolean error;
   
-  public NumberPair(){ }
+    public NumberPair(){ this(0,0,false);}
   
+    public NumberPair(double v1, double v2, boolean e)
+    {
+	error = e;
+	value1 = v1;
+	value2 = v2;
+    }
   public NumberPair(double v1, double v2)
     {
-      value1 = v1;
-      value2 = v2;
+	this(v1,v2,false);
     }
   
   public double getValue() { return value2;}
@@ -51,10 +57,12 @@ public class NumberPair implements DataPair
   public double getX() { return value1;}
   public double getY() { return value2;}
   public void setX(double v1) { value1 = v1;} 
-  public void setY(double v2) { value2 = v2;} 
+  public void setY(double v2) { value2 = v2;}
+  public boolean isError() { return error;}
+  public void setError(boolean e) { error = e; }
   
   public void printOut()
     {
-      System.out.println("(" + String.valueOf(value1) + "," + String.valueOf(value2) + ")");
+	System.out.println("(" + String.valueOf(value1) + "," + String.valueOf(value2) + "," + String.valueOf(error) + ")");
     }
 }

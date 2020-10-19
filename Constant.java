@@ -64,7 +64,7 @@ public class Constant extends NumberData implements BoxedRangeListener //will li
   public java.io.File getLogFile(){ return null;}
   public void stopLogging(){}
   public void setLogFile(java.io.File f) {}
-  public void setData(double val, double timeInt){} 
+  public void setData(double val, double timeInt, boolean error){} 
   public void setDataExact(double val, double timev){}//exact data value and exact time value 
   public void stop()
     {

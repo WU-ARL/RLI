@@ -33,7 +33,7 @@
  */
 public interface Monitor
   {
-    public void setData(double val, double timeInt); //not sure if future monitors will take this form of params so this is why it is a separate descendant of Monitor
+      public void setData(double val, double timeInt, boolean error); //not sure if future monitors will take this form of params so this is why it is a separate descendant of Monitor
     public void setDataExact(double val, double timev);//exact data value and exact time value 
     public void stop();
     public void start();

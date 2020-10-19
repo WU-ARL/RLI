@@ -714,6 +714,15 @@ public class MultiLineGraph extends NumberGraph implements LogScale.Scaleable
 				if (y_log) x = Math.log(y);
 				if (drawing)
 				{
+				    if (elem.isError()) //if there is an error skip the bad part and start redrawing later - 9/30/2020
+					{
+					    if (num_pts > 0)
+						{
+						    g2.drawPolyline(Xs, Ys, num_pts);
+						    num_pts = 0;
+						}
+					    continue;  
+					}
 					if ((x >= xmn) && (x <= xmx))
 					{
 						//Xs[num_pts] = xaxis.getCoordinate(x); 
@@ -729,7 +738,7 @@ public class MultiLineGraph extends NumberGraph implements LogScale.Scaleable
 				}
 				else //haven't started adding to the plot yet
 				{
-					if (x >= xmn)
+				    if (x >= xmn && !elem.isError())
 					{
 						drawing = true;
 						if (x > xmn && old_elem != null)

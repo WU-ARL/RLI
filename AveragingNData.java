@@ -54,7 +54,7 @@ public class AveragingNData extends NumberData
 
 	public void setRunningAvg(boolean b) { runningAvg = b;}
 
-	public void setData(double data, double timeInterval)
+    public void setData(double data, double timeInterval, boolean error)
 	{
 		if (!stopped && !paused)
 		{
@@ -63,12 +63,12 @@ public class AveragingNData extends NumberData
 				dataSum += data;
 				timeSum += timeInterval;
 				if (runningAvg)
-					super.setData((dataSum/timeSum), timeInterval);
+				    super.setData((dataSum/timeSum), timeInterval, false);
 				else
 				{
 					if (timeSum >= avgWindow)
 					{
-						super.setData((dataSum/timeSum), timeSum);
+					    super.setData((dataSum/timeSum), timeSum, false);
 						timeSum = 0;
 						dataSum = 0;
 					}

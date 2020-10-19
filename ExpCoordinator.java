@@ -48,8 +48,8 @@ import org.xml.sax.*;
 
 public class ExpCoordinator //implements Mode.MListener
 {
-	public static final double VERSION = 8.6;
-	public static final int VERSION_BYTES = 0x8600; //& with ops to add version
+	public static final double VERSION = 8.7;
+	public static final int VERSION_BYTES = 0x8700; //& with ops to add version
 	public static PrintMessage printer = null;
 	public static ExpCoordinator theCoordinator = null;
 	public static final int NEW = 0;
@@ -973,7 +973,7 @@ public class ExpCoordinator //implements Mode.MListener
 
 		if (!sppmon)
 		{
-			hwmanager.addFromResource("IXP", "IXP.hw");
+		        //hwmanager.addFromResource("IXP", "IXP.hw");
 			hwmanager.addFromResource("PC1core", "PC1core.hw");
 			hwmanager.addFromResource("PC2core", "PC2core.hw");
 			hwmanager.addFromResource("PC8core1g", "PC8core1g.hw");
@@ -989,7 +989,7 @@ public class ExpCoordinator //implements Mode.MListener
 			hwmanager.addSubtypeFromResource("SWR8.shw");
 			hwmanager.addSubtypeFromResource("SWR16.shw");
 			hwmanager.addSubtypeFromResource("HOST48core.shw");
-			hwmanager.addSubtypeFromResource("NPR.shw");
+			//hwmanager.addSubtypeFromResource("NPR.shw");
 			HardwareSpec ixp_spec = hwmanager.getHardware("IXP");
 			if (ixp_spec != null)
 				tmp_menu.add(new Cluster.IXPMenu(ixp_spec));

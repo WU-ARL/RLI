@@ -52,8 +52,8 @@ public abstract class ConditionalDefault implements Conditional
     }
 
   //Monitor interface 
-  public abstract void setData(double val, double timeInt); //not sure if future monitors will take this form of params so this is why it is a separate descendant of Monitor
-  public void setDataExact(double val, double timev){setData(val, timev);}//exact data value and exact time value 
+    public abstract void setData(double val, double timeInt, boolean error); //not sure if future monitors will take this form of params so this is why it is a separate descendant of Monitor
+    public void setDataExact(double val, double timev){setData(val, timev, false);}//exact data value and exact time value 
   public void stop()
     {
       inStop = true;

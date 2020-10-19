@@ -236,7 +236,7 @@ public class LogFileEntry implements Monitorable, Runnable //log file entry stor
         }
       else 
         {
-          monitor.setData(datav, reltimev);
+	    monitor.setData(datav, reltimev, false);
           //ExpCoordinator.print("  relative replay (time, reltime, data) = (" + timev + ", " + reltimev + ", " + datav + ")");
         }
     }

@@ -54,7 +54,7 @@ public class NumberData extends BoxedRangeDefault implements MonitorPlus
 	protected MonitorDataType.Base dataType = null;
 	protected boolean receivedFirst = false;
 	protected boolean stopped = true;
-	protected boolean paused = true;
+	protected boolean paused = true; // 
 	protected boolean inUserStop = false;
 	protected boolean inStop = false;
 	protected Vector monitorables;
@@ -144,6 +144,7 @@ public class NumberData extends BoxedRangeDefault implements MonitorPlus
 			{
 				try
 				{
+				    ExpCoordinator.printer.print(new String("NumberData::addElement logging " + getDataType().getName() + "::addElement (" + np.getX() + ", " + np.getY() + ")"), 5);
 					lfStream.writeLine(new String(elem.getX() + " " +elem.getY()));
 					//lfStream.writeChars(new String (String.valueOf(elem.getX()) + " " + String.valueOf(elem.getY()) + "\n"));
 				}
@@ -323,18 +324,24 @@ public class NumberData extends BoxedRangeDefault implements MonitorPlus
 		}
 	}
 
-	public void setData(double data, double timeInterval) //timeInterval is in seconds
+    public void setData(double data, double timeInterval, boolean error) //timeInterval is in seconds
 	{
 		if (!stopped && !paused)
 		{
-			if (receivedFirst || oneshot)
+		    if (error)
+		    	{
+		    	    ExpCoordinator.print(new String(dataType.getName() + " NumberData::setData error ( " + data + ", " + timeInterval + " currentTime:" + currentTime +")"));
+			    //	    addElement(new NumberPair( currentTime, dataType.convertData(data), true)); //puts into Mb/s
+		    	}
+		    //else
+		    if (receivedFirst || oneshot)
 			{
 				//System.out.println(dataType.getName() + " time interval is " + timeInterval);
 				if (currentTime >= 0) 
 					currentTime += timeInterval;
 				else currentTime = 0;
 				ExpCoordinator.print(new String(dataType.getName() + " NumberData::setData ( " + data + ", " + timeInterval + " currentTime:" + currentTime +")"), 5);
-				addElement(new NumberPair( currentTime, dataType.convertData(data))); //puts into Mb/s
+				addElement(new NumberPair( currentTime, dataType.convertData(data), error)); //puts into Mb/s
 				if (oneshot)
 				{
 					fireEvent(new BoxedRangeEvent(this, (BoxedRangeEvent.XVALUE_CHANGED | 
@@ -343,7 +350,7 @@ public class NumberData extends BoxedRangeDefault implements MonitorPlus
 							BoxedRangeEvent.YEXTENT_CHANGED)));
 				}
 			}
-			else receivedFirst = true;//don't add the first one since the calculation will be off
+		    else receivedFirst = true;//don't add the first one since the calculation will be off
 		}
 	}
 
@@ -466,6 +473,7 @@ public class NumberData extends BoxedRangeDefault implements MonitorPlus
 		{
 			try
 			{
+			    ExpCoordinator.printer.print(new String("NumberData(" + dataType.getName() + ") stop Logging (currentSize, maxSize, first) = (" + currentSize + "," + maxSize + "," + first + ")" ));
 				NumberPair elem;
 				int j = first;
 				for (int i = 0; i < currentSize; ++i)

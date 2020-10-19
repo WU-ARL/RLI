@@ -128,13 +128,13 @@ public abstract class AbstractMonitorAction implements MonitorAction
       acceptButton = new JButton(new AbstractAction(opt0){
           public void actionPerformed(ActionEvent e)
             {
-              accept();
+              op_accept();
             }
           });
       cancelButton = new JButton(new AbstractAction(opt1){
           public void actionPerformed(ActionEvent e)
             {
-              cancel();
+              op_cancel();
             }
           });
       JPanel tmp_panel = new JPanel();
@@ -144,6 +144,7 @@ public abstract class AbstractMonitorAction implements MonitorAction
       add(tmp_panel);
     }
     
+    public void op_accept() { accept();}
     public void accept()
       {
         if (logFileButton.isSelected()) 
@@ -164,6 +165,7 @@ public abstract class AbstractMonitorAction implements MonitorAction
              paramOptions.setIsRate(rateButton.isSelected());
           }
       }
+    public void op_cancel() { cancel();}
     public void cancel() {}
   }
     

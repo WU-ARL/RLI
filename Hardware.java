@@ -2596,7 +2596,10 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			ExpCoordinator.print(new String("Hardware.NCCP_Requester.storeData returnIndex:" + returnIndex + " port:" + port + " version:" + version + " numParams:" + numParams), 5);
 			dout.writeInt(returnIndex);
 			dout.writeShort(port);
-			NCCP.writeString(String.valueOf(version), dout);
+			if (hardware != null)
+			    NCCP.writeString(hardware.expCoordinator.getCurrentExp().getProperty(Experiment.ONLID), dout); //1_30_23 added to be able identify component and experiment
+			else
+			    NCCP.writeString(String.valueOf(version), dout);
 			Object param;
 			int tmp_num_params = numParams;
 			int i;

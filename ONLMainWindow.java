@@ -61,7 +61,7 @@ public class ONLMainWindow extends JFrame //implements Mode.MListener
 		setVisible(false);
 		expCoordinator = expc;
 		topology = new TopologyPanel(this);
-		if (!expCoordinator.isSPPMon()) topology.setLinkTool(expCoordinator.getTopology().getLinkTool());
+		topology.setLinkTool(expCoordinator.getTopology().getLinkTool());
 		expCoordinator.getTopology().addTopologyListener(topology);
 
 		if (expCoordinator.getDebugLevel() > 12) getContentPane().add((new JScrollPane(topology, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED)), BorderLayout.CENTER);

@@ -587,26 +587,13 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 		{
 			onlComponent = c;
 		}
-		public void connectionFailed(NCCPConnection.ConnectionEvent e)
-		{
-			if (ExpCoordinator.isSPPMon())
-			{
-				String msg = new String(onlComponent.getLabel() + ": connection failed");
-				ExpCoordinator.theCoordinator.addError(new StatusDisplay.Error(msg, msg, msg, (StatusDisplay.Error.STATUSBAR | StatusDisplay.Error.LOG)));
-			}
-		}
+	        public void connectionFailed(NCCPConnection.ConnectionEvent e){}
 		public void connectionClosed(NCCPConnection.ConnectionEvent e) {}
 		public void connectionOpened(NCCPConnection.ConnectionEvent e)
 		{
 			ONLDaemon od = (ONLDaemon)e.getSource();
 			onlComponent.fireEvent(new ConnectionEvent(onlComponent, od.getDaemonType(), od.getConnectionID()));
 			ExpCoordinator.print(new String(onlComponent.getLabel() + ".ConnectionListener.connectionOpened"), 1);
-
-			if (ExpCoordinator.isSPPMon())
-			{
-				String msg = new String(onlComponent.getLabel() + ": connected");
-				ExpCoordinator.theCoordinator.addError(new StatusDisplay.Error(msg, msg, msg, (StatusDisplay.Error.STATUSBAR | StatusDisplay.Error.LOG)));
-			}
 		}
 	}
 
@@ -708,18 +695,10 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 				if (s.getNetmask() == null) ExpCoordinator.print(new String("ONLComponent.PortBase(" + getLabel() + ").setSubnet " + s.getBaseIP() + " netmask null"));
 				addToDescription(ONLComponent.IPADDR, new String(getIPAddr().toString() + "/" + s.getNetmask().getBitlen()));
 				addToDescription(ONLComponent.SUBNET, new String("subnet:" + s.getBaseIP().toString()));// s.getIndex()));
-
-				if (s instanceof OldSubnetManager.Subnet && getOriginalSubnet() == null) setOriginalSubnet(s);
 			}
 			else 
 			{
-				if (ExpCoordinator.isOldSubnet() && getOriginalSubnet() != null) 
-				{
-					OldSubnetManager.Subnet osn = (OldSubnetManager.Subnet)getOriginalSubnet();
-					if (properties.getProperty(ORIG_IPADDR) != null) setIPAddr(properties.getProperty(ORIG_IPADDR));
-					setSubnet(osn);
-				}
-				else addToDescription(ONLComponent.SUBNET, "subnet:none");
+			    addToDescription(ONLComponent.SUBNET, "subnet:none");
 			}
 			if (isSwitch()) getParent().setSubnet(s);// && originalSubnet == null) originalSubnet = s;
 		}	
@@ -763,11 +742,6 @@ public abstract class ONLComponent implements ListDataListener, PropertyChangeLi
 			if (subnet != null)
 			{
 				subnet.clearPort(this);
-				if (ExpCoordinator.isOldSubnet() && getOriginalSubnet() != null && subnet != getOriginalSubnet())
-				{
-					getOriginalSubnet().clearPort(this);
-					setOriginalSubnet(null);
-				}
 				subnet = null;
 			}
 		}

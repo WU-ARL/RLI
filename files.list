@@ -21,7 +21,6 @@ ControlPanel.java
 DataPair.java 
 DirectConn.java
 ExpCoordinator.java 
-ExpCompare.java
 ExpDaemon.java 
 Experiment.java 
 ExperimentXML.java 
@@ -80,9 +79,6 @@ NumberData.java
 NumberedAxis.java 
 NumberGraph.java 
 NumberPair.java 
-Observer.java
-ObserveDaemon.java
-OldSubnetManager.java
 ONLComponentButton.java
 ONLComponent.java 
 ONLComponentList.java 
@@ -118,6 +114,5 @@ TimeDisplay.java
 Topology.java 
 TopologyPanel.java 
 Units.java 
-VirtualTopology.java
 Zoom.java 
    

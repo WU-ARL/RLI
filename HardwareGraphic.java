@@ -897,7 +897,6 @@ public class HardwareGraphic extends ONLGraphic
 	}
 	public void addNodeListener(ONLGraphic.ButtonListener l) 
 	{
-		//ExpCoordinator.print(new String("HardwareGraphic(" + onlComponent.getLabel() + ").addNodeListener " + l.toString()), ExpCompare.TEST_CMP);
 		mButtonListener.addAction(l);
 	}
 	public void removeNodeListener(ONLGraphic.ButtonListener l)  { mButtonListener.removeAction(l);}
@@ -953,11 +952,6 @@ public class HardwareGraphic extends ONLGraphic
 	{
 		if (graphicSelected) graphicSelected = false;
 		else graphicSelected = true;
-		//if (onlComponent != null && onlComponent instanceof VirtualTopology.VNode)
-		//{
-			//ONLComponent real_component = ((VirtualTopology.VNode)onlComponent).getPhysicalComponent();
-			//if (real_component != null) real_component.setSelected(graphicSelected);
-		//}
 	}
 	public void addComponentListener(ComponentListener cl)
 	{

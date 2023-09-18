@@ -662,7 +662,7 @@ public abstract class Graph extends MonitorManager.Display implements Zoom.Zooma
 			public void windowClosing (WindowEvent e)
 			{
 				ExpCoordinator.print("Graph.windowClosing");
-				if (!ExpCoordinator.isObserver()) stopMonitoring();
+				stopMonitoring();
 			}
 		});
 

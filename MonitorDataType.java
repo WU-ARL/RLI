@@ -97,7 +97,7 @@ class MonitorDataType
 		{	
 			Object[] options = {"Change", "Close"};
 			Object[] array;
-			boolean tmp_edit = !(ExpCoordinator.isObserver());
+			boolean tmp_edit = true;
 			int end_prefix = 3;
 			JRadioButton rate = null;
 			JRadioButton abs_val = null;

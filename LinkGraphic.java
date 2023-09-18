@@ -133,15 +133,6 @@ public class LinkGraphic extends ONLGraphic implements ComponentListener
 		}
 
 		Point p2 = new Point((int)tmp_p.getX(), (int)tmp_p.getY());
-
-		//if (point1 == point2)
-		//	{
-		//    ExpCoordinator.print(new String(onlComponent.getLabel() + "::LinkGraphic.setBounds p1 = (" + p1.getX() + "," + p1.getY() + ") p2 = (" + p2.getX() + "," + p2.getY() + ")"), 6);
-		//    if (oldP1 != null && oldP2 != null) ExpCoordinator.print(new String("oldP1 = (" + oldP1.getX() + "," + oldP1.getY() + ") oldP2 = (" + oldP2.getX() + "," + oldP2.getY() + ")"), 6);
-		//  }
-		//if nothing has moved leave the computations alone
-		//if (count > 1 && oldP1 != null && oldP2 != null && p1.equals(oldP1) && p2.equals(oldP2)) return (getBounds());
-		//if ( p1.equals(oldP1) && p2.equals(oldP2)) ++count;
 		oldP1 = new Point(p1);
 		oldP2 = new Point(p2);
 
@@ -165,7 +156,7 @@ public class LinkGraphic extends ONLGraphic implements ComponentListener
 			{
 				ONLComponent onlcomp = point1.getONLComponent();
 				//ExpCoordinator.print("i don't want to be here parents = " + point1.getParent() + " " + point2.getParent());
-				if (onlcomp instanceof Hardware.Port) //onlcomp.isType(ONLComponent.WUGSPORT) || (onlcomp.isType(ONLComponent.NSPPORT)))
+				if (onlcomp instanceof Hardware.Port) 
 				{
 					//ExpCoordinator.print("                      point1.parent == point2.parent loopback");
 					//ExpCoordinator.print("                       (" + r.getX() + ", " + r.getY() + ", " + r.getWidth() + ", " + r.getHeight() +")");

@@ -42,7 +42,6 @@ public class TextFieldwLabel extends ONL.ComponentwLabel
 {
   protected JTextField textField = null;
   protected JLabel label = null;
-  private ONL.ExpPropertyAction observeAction = null;
 
   public TextFieldwLabel(JTextField tf, String lbl)
     {
@@ -79,29 +78,5 @@ public class TextFieldwLabel extends ONL.ComponentwLabel
   public void removeActionListener(ActionListener l) { textField.removeActionListener(l);}
   public void setEditable(boolean b) { textField.setEditable(b);}
   public JTextField getTextField() { return textField;}
-  public void setObserveAction(boolean ign_obs, boolean exp_wide)
-  {
-    if (observeAction == null && !ign_obs) 
-      {
-        observeAction = (new ONL.ExpPropertyAction(exp_wide)
-          {            
-            public void propertyChange(PropertyChangeEvent e)
-            {
-              //ExpCoordinator.print(new String("ONL.UserAction.propertyChange action " + getValue(Action.NAME) + " ignore = " + ignoreObsStatus + " isobserver = " + ExpCoordinator.isObserver()), 3);
-              if (e.getPropertyName().equals(ExpCoordinator.OBSERVE))
-                textField.setEnabled(!ExpCoordinator.isObserver());
-            }
-          });
-        textField.setEnabled(!ExpCoordinator.isObserver());
-      }
-    else 
-      {
-        if (ign_obs)
-          {
-            ExpCoordinator.theCoordinator.removePropertyListener(ExpCoordinator.OBSERVE, observeAction);
-            observeAction = null;
-          }
-      }
-  }
   public void setDisabledTextColor(Color c) { textField.setDisabledTextColor(c);}
 }

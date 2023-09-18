@@ -117,10 +117,7 @@ public class LinkTool extends MouseInputAdapter //implements Mode.ToolComponent
 				if (!ltool.addLink(linkGraphic, endComponent))
 				{
 					//ExpCoordinator.print(new String("LinkTool.ComponentListener::mouseReleased from " + startComponent.getLabel() + " cancelled"), TEST_ADD);
-					if (ltool.isVirtualTopology())
-						ltool.expCoordinator.getCurrentExp().getVirtualTopology().getTopologyPanel().removeLink(linkGraphic);
-					else
-						ExpCoordinator.getMainWindow().getTopologyPanel().removeLink(linkGraphic);
+				    ExpCoordinator.getMainWindow().getTopologyPanel().removeLink(linkGraphic);
 				}
 				startComponent = null;
 				endComponent = null;
@@ -197,30 +194,11 @@ public class LinkTool extends MouseInputAdapter //implements Mode.ToolComponent
 		else
 		{
 			//10G change for gige to gige connections remove GigE to GigE restriction
-			//if (((start_comp instanceof GigEDescriptor.Port) || (start_comp instanceof GigEDescriptor)) && 
-			//  ((end_comp instanceof GigEDescriptor.Port) || (end_comp instanceof GigEDescriptor))) 
-			//return false;
-			//10G change return false if interface types not equal & not a GigE-GigE link 
-			
-			//we're just going to allow endpoints with different bandwidths to be linked together.
-			//if (!start_comp.getInterfaceType().equals(end_comp.getInterfaceType()) &&
-				//	!(((start_comp instanceof GigEDescriptor.Port) || (start_comp instanceof GigEDescriptor)) && 
-					//		((end_comp instanceof GigEDescriptor.Port) || (end_comp instanceof GigEDescriptor))))
-			//{
-				//ExpCoordinator.print(new String("LinkTool.addLink " + comp.toString() + " fail diff interface start:" + start_comp.getLabel() + "(" + start_comp.getInterfaceType() + ")  end:" + end_comp.getLabel() + "(" + end_comp.getInterfaceType() + ")"), TEST_ADD);
-				//return false;
-			//}
+		
 			
 			//SUBNET:add call SubnetManager addLink here
 			try {
-				if (ExpCoordinator.isOldSubnet())
-				{
-					//check for cycles
-					if (expCoordinator.getTopology().isCycle(start_comp, end_comp)) return false;
-					OldSubnetManager.addLink((ONLComponent.PortBase)start_comp, (ONLComponent.PortBase)end_comp);
-				}
-				else
-					SubnetManager.addLink((ONLComponent.PortBase)start_comp, (ONLComponent.PortBase)end_comp);
+			    SubnetManager.addLink((ONLComponent.PortBase)start_comp, (ONLComponent.PortBase)end_comp);
 			}
 			catch(SubnetManager.SubnetException e)
 			{
@@ -281,7 +259,6 @@ public class LinkTool extends MouseInputAdapter //implements Mode.ToolComponent
 		LinkDescriptor ld = new LinkDescriptor(getNextLabel(), startc, currentBW, expCoordinator);
 		return ld;	
 	}
-	public boolean isVirtualTopology() { return false;}
     protected int getNextCount() { return count++;}
     protected TopologyPanel getTopologyPanel() { return (expCoordinator.getMainWindow().getTopologyPanel());}
 }

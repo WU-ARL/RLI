@@ -148,32 +148,7 @@ public class HardwareHost extends Hardware
 		super.setIPAddr(ip);
 		//if (getProperty(ORIG_IPADDR) == null) setProperty(ORIG_IPADDR, ip);
 		String strarray[] = ip.split("\\.");
-		if (ExpCoordinator.isOldSubnet())
-		{		
-			String orig_ip = getPort(0).getProperty(ORIG_IPADDR);
-			if (orig_ip != null && orig_ip.equals(ip)) return;
-			OldSubnetManager.Subnet osn = (OldSubnetManager.Subnet)getSubnet();
-			if (osn == null) ExpCoordinator.print(new String("HardwareHost(" + getLabel() + ").setIPAddr " + ip + " osn null"), TEST_SUBNET);
-			else
-			{
-				String orig_sn = "null";
-				if (getOriginalSubnet() != null) orig_sn = getOriginalSubnet().getBaseIP().toString();
-				ExpCoordinator.print(new String("HardwareHost(" + getLabel() + ").setIPAddr " + ip + " osn:" + osn.getBaseIP() + " orig:" + orig_sn), TEST_SUBNET);
-			}
-			if (osn != null && osn != getOriginalSubnet())
-			{
-				int ndx = (Integer.parseInt(strarray[3])) - osn.getSubIndex(); 
-				char port_ch = ONL.portLabels.charAt(ndx);
-				if (ndx > 1 || (getPort(0).getLinkedTo() != null && !getPort(0).getLinkedTo().isRouter()))
-					setLabel(new String("n"+ osn.getIndex() + "p" + osn.getSubnetPort() + port_ch));
-				else
-					setLabel(new String("n"+ osn.getIndex() + "p" + osn.getSubnetPort()));
-			}
-		}
-		else
-		{
-			setLabel(new String("h" + strarray[2] + "x" + strarray[3]));
-		}
+		setLabel(new String("h" + strarray[2] + "x" + strarray[3]));
 	}
 
 	public void setSubnet(SubnetManager.Subnet sn)
@@ -185,10 +160,7 @@ public class HardwareHost extends Hardware
 		  if (tmp_sn != null) removeHostGeneratedRoute();
 		  if (sn != null) 
 		  {
-			  if (ExpCoordinator.isOldSubnet())
-				  addHostGeneratedRoute(sn.getBaseIP().toString(), 28, 0, new ONL.IPAddress());
-			  else
-				  addHostGeneratedRoute(sn.getBaseIP().toString(), 24, 0, new ONL.IPAddress());
+		      addHostGeneratedRoute(sn.getBaseIP().toString(), 24, 0, new ONL.IPAddress());
 		  }
 		}
 		if (sn == null) setLabel(properties.getProperty(ORIG_LABEL));

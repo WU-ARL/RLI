@@ -319,14 +319,7 @@ public abstract class ONLCTable extends ONLComponent implements IDAssigner.IDabl
 
 		public boolean isCellEditable(int r, int c)
 		{
-			if (ExpCoordinator.isObserver()) 
-			{
-				//if (onlcTable instanceof NPRPluginTable) 
-				ExpCoordinator.print(new String("ONLCTable.isCellEditable isObserver " + onlcTable.getLabel() + " (" +r + "," + c + ")"), 8);
-				return false;
-			}
-			else 
-				ExpCoordinator.print(new String("ONLCTable.isCellEditable " + onlcTable.getLabel() + " (" +r + "," + c + ")"), 8);
+			ExpCoordinator.print(new String("ONLCTable.isCellEditable " + onlcTable.getLabel() + " (" +r + "," + c + ")"), 8);
 			Element elem = (Element)onlcTable.list.elementAt(r);
 			if (elem != null) return (elem.isEditable(c));
 			else return false;

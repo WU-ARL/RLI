@@ -165,7 +165,7 @@ public class NextHop
 		}
 		else ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP hardware:" + hardware.getLabel()), TEST_IPADDRESS);
 		Hardware.Port p = hardware.getPort(port);
-		if ((nhip == null || nhip.isZero() || ExpCoordinator.isOldSubnet()) && p != null)
+		if ((nhip == null || nhip.isZero()) && p != null)
 		{ 	
 			ONLComponent c = p.getLinkedTo();
 		
@@ -175,42 +175,7 @@ public class NextHop
 		ExpCoordinator.print(new String("NextHop.getNextHopIP hardware:" + hardware.getLabel() + " port:" + port + " nhip:" + nhip.toString()), TEST_IPADDRESS);
 
 		return nhip;
-		/*
-		try
-		{
-			ONL.IPAddress tmp_addr = new ONL.IPAddress(p.getNHIPAddr());
-			ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP hardware:" + hardware.getLabel() + " ip:" + tmp_addr.getInt()), TEST_IPADDRESS);
-			return (tmp_addr.getInt());
-		}
-		catch (java.text.ParseException e) 
-		{
-			ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP error:" + e.getMessage()));
-			return 0;
-		}
-		*/
 	}
-	/*
-	public String getNHIPString() 
-	{
-		if (hardware == null) 
-		{
-			ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP hardware null"), TEST_IPADDRESS);
-			return "";
-		}
-		Hardware.Port p = hardware.getPort(port);
-		try
-		{
-			ONL.IPAddress tmp_addr = new ONL.IPAddress(p.getNHIPAddr());
-			ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP hardware:" + hardware.getLabel() + " ip:" + tmp_addr.getInt()), TEST_IPADDRESS);
-			return (tmp_addr.toString());
-		}
-		catch (java.text.ParseException e) 
-		{
-			ExpCoordinator.print(new String("NextHop(" + port + ").getNextHopIP error:" + e.getMessage()));
-			return "";
-		}
-	}
-	*/
 	public boolean equals(Object o)
 	{
 		if (o == this) return true;

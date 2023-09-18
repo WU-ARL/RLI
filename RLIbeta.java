@@ -54,7 +54,6 @@ public class RLIbeta
     //args[len+1] = "-nprtest";
     //args[len+2] = "-record";
     //args[len+3] = "-cluster";
-    //args[len+4] = "-observe";
     ExpCoordinator ec = new ExpCoordinator(args);
     //ec.setManagement(true);
     //ec.addProxyTest();

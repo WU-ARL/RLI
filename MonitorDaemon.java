@@ -60,7 +60,7 @@ public class MonitorDaemon extends ONLDaemon implements MonitorEntry.Listener, P
 	public MonitorDaemon(String h, int p, int tp, ONLComponent c, boolean dir_conn) 
 	{
 		this(h, p, tp);
-		if (!dir_conn && !ExpCoordinator.isSPPMon()) setProxy(c.getExpCoordinator().getProxy());
+		if (!dir_conn ) setProxy(c.getExpCoordinator().getProxy());
 		else setNonProxy();
 		onlComponent = c;
 		c.addPropertyListener(ONLComponent.STATE, this);

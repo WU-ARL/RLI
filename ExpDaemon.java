@@ -50,10 +50,6 @@ public class ExpDaemon extends ONLDaemon //implements ExpRequest.Listener
   public static final int NCCP_Operation_ExperimentRequest = 48; 
   public static final int NCCP_Operation_ResExtension = 49;
   public static final int NCCP_Operation_CancelRes = 50;
-  public static final int NCCP_Operation_AddObserver = 51;
-  public static final int NCCP_Operation_ObservableReq = 52;
-  public static final int NCCP_Operation_ObserveExpReq = 53;
-  public static final int NCCP_Operation_ObserveExpResp = 54;
   public static final int NCCP_Operation_ReservationLink = 58;
   public static final int NCCP_Operation_ReservationComponent = 59;
   public static final int NCCP_Operation_ReservationCluster = 60;

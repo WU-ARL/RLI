@@ -201,23 +201,8 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 		}
 		public void removeWaiting(Object w) 
 		{
-		    if (ExpCoordinator.isSPPMon()) removeWaiting(w, "Completed.");
-		    else removeWaiting(w, "Commit Completed");
+		    removeWaiting(w, "Commit Completed");
 		}
-	    /* CHANGED SPPMON
-			if (waiting.contains(w)) 
-			{
-				waiting.remove(w);
-				ExpCoordinator.printer.print(new String("CommitProgressBar.removeWaiting " + w.toString() + " number waiting " + waiting.size()), 2);
-			}
-			if (waiting.size() == 0) //if there are no outstanding commits kill the progress bar
-			{
-				setValue(getMaximum());
-				setString("Commit Completed.");
-				stop();
-			}
-		}
-	    */
 		public void removeWaiting(Object w, String s) 
 		{
 			if (waiting.contains(w)) 
@@ -248,8 +233,7 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 			setValue(getMinimum());
 			if (!timer.isRunning()) timer.start(); //not sure if this should be a restart
 			else timer.restart();
-			if (ExpCoordinator.isSPPMon()) setString("Processing");
-			else setString("Committing");
+			setString("Committing");
 			//updateString();
 		}
 		private void stop() 
@@ -290,9 +274,7 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 			String prop = e.getPropertyName();
 			if (prop.equals(ExpCoordinator.OBSERVE))
 			{
-				if (ExpCoordinator.isObserver()) setString("Observing");
-				else 
-					setString("Progress Bar");
+			    setString("Progress Bar");
 			}
 			if (prop.equals(ExpCoordinator.VIEW_SNAPSHOT))
 			{
@@ -390,7 +372,6 @@ public class StatusDisplay extends JPanel implements PropertyChangeListener
 	//PropertyChangeListener
 	public void propertyChange(PropertyChangeEvent e)
 	{
-		if (ExpCoordinator.isObserver()) return;
 		if (((Action)e.getSource()).isEnabled()) setCommitBorder(false);//needCommitBorder);
 		else 
 		{

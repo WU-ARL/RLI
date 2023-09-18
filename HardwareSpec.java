@@ -365,7 +365,6 @@ public class HardwareSpec extends HardwareBaseSpec implements ComponentXMLHandle
 		//private boolean is_router = false;
 		//private String componentType = NOT_ADDRESSED;
 		private HardwareSpec hardwareType = null;
-		private VirtualTopology.VNodeSubtype virtualType = null;
 		//private Vector cfgParams = null;
 		private double stVersion = ExpCoordinator.VERSION;
 
@@ -429,11 +428,6 @@ public class HardwareSpec extends HardwareBaseSpec implements ComponentXMLHandle
 					if (resourceName != null) hardware.setResourceName(resourceName);
 					if (file != null) hardware.setFile(file);
 					setSpec(hardware);
-				}
-				if (localName.equals(ExperimentXML.VIRTUAL))
-				{
-					((Subtype)hardware).virtualType = new VirtualTopology.VNodeSubtype(attributes);
-					xmlReader.setContentHandler(((Subtype)hardware).virtualType.getXMLHandler(xmlReader, this));
 				}
 				if (localName.equals(ExperimentXML.HWTYPE)) 
 				{
@@ -757,8 +751,6 @@ public class HardwareSpec extends HardwareBaseSpec implements ComponentXMLHandle
 			//else componentType = NOT_ADDRESSED;
 			if (otp_nm != null) typeName = otp_nm;
 		}
-		
-		protected VirtualTopology.VNodeSubtype getVirtualType() { return virtualType;}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -843,7 +835,6 @@ public class HardwareSpec extends HardwareBaseSpec implements ComponentXMLHandle
 				if (getItem(hw) == null && !hw.isClusterOnly()) 
 				{
 					int pos = menu.getItemCount() - 2;
-					if (ExpCoordinator.isSPPMon()) pos += 1;
 					menu.insert(hw.getMenuItem(), pos);//new HardwareSpec.MenuItem(hw), pos);
 				}
 			}

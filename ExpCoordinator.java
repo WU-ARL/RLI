@@ -48,8 +48,8 @@ import org.xml.sax.*;
 
 public class ExpCoordinator //implements Mode.MListener
 {
-	public static final double VERSION = 9.2;
-	public static final int VERSION_BYTES = 0x9200; //& with ops to add version
+	public static final double VERSION = 9.3;
+	public static final int VERSION_BYTES = 0x9300; //& with ops to add version
 	public static PrintMessage printer = null;
 	public static ExpCoordinator theCoordinator = null;
 	public static final int NEW = 0;
@@ -94,7 +94,6 @@ public class ExpCoordinator //implements Mode.MListener
 	private Vector extraActions = null;
 	//private JRadioButtonMenuItem modeActions[] = null;
 	private Vector topologyActions = null;
-	private VirtualTopology.VAction virtualAction = null;
 
 	private boolean management = false;
 	private boolean directConn = false;
@@ -119,7 +118,6 @@ public class ExpCoordinator //implements Mode.MListener
 	public static final String TOPO_SET = "set_topo";
 	public static final String DEFAULT_DIR = "default_dir";
 	public static final String DEFAULT_POLLING = "default_polling";
-	public static final String SPPMON = "sppmon";
 	public static final String NOGUI = "nogui";
 
 	private static final String PROP_FILE = ".onlprops";
@@ -773,7 +771,7 @@ public class ExpCoordinator //implements Mode.MListener
 		public void windowClosing (WindowEvent e)
 		{
 			expCoordinator.closeCurrentExp();
-			if (!isSPPMon() && isConnected())
+			if (isConnected())
 			{
 				int rtn = JOptionPane.showConfirmDialog(mainWindow, 
 						new String("Do you wish to cancel your current reservation?"),
@@ -805,7 +803,6 @@ public class ExpCoordinator //implements Mode.MListener
 		String title = null;
 		int print_history = 0;
 		properties = new ONLPropertyList(this);
-		properties.setProperty(SPPMON, false);
 		properties.setProperty(ADVANCED, false);
 		System.setProperty("user.language", "en");
 		System.setProperty("user.country", "US");
@@ -869,10 +866,6 @@ public class ExpCoordinator //implements Mode.MListener
 			{
 				print_history = Integer.parseInt(args[++i]);
 			}
-			if (args[i].startsWith("-sppmon"))
-			{
-				properties.setProperty(SPPMON, true);
-			}
 			if (args[i].startsWith("-nogui"))
 			{
 				properties.setProperty(NOGUI, true);
@@ -897,7 +890,6 @@ public class ExpCoordinator //implements Mode.MListener
 		properties.setProperty(RECORDING,false);
 
 		//read properties from file     
-		boolean sppmon = properties.getPropertyBool(SPPMON);
 		try
 		{
 			java.io.File prop_file = new java.io.File(getONLDir(), PROP_FILE);
@@ -923,27 +915,20 @@ public class ExpCoordinator //implements Mode.MListener
 		topology = new Topology(this);
 		//mode = new Mode(Mode.TOPOLOGY);
 		onlUndoManager = new ONLUndoManager(this);
-		if (!sppmon) 
-		{
-			proxy = new Proxy(this);
-			expDaemon = new ExpDaemon(new String(onlhost), coord_port, ONLDaemon.ONLCD); //hard coded for now during test
-			if (!directConn) expDaemon.setProxy(proxy);
-			else expDaemon.setNonProxy();
-			expDaemon.addConnectionListener(onlUndoManager);
-		}
+		proxy = new Proxy(this);
+		expDaemon = new ExpDaemon(new String(onlhost), coord_port, ONLDaemon.ONLCD); //hard coded for now during test
+		if (!directConn) expDaemon.setProxy(proxy);
+		else expDaemon.setNonProxy();
+		expDaemon.addConnectionListener(onlUndoManager);
 		initializeFileMenu();
 		initializeEditMenu();
-		if (!sppmon) initializeExtraMenu();
+		initializeExtraMenu();
 
-		if (sppmon)
-			mainWindow = new ONLMainWindow(this, new String("SPPmon v." + ExpCoordinator.VERSION));
+		if (title != null)
+		    mainWindow = new ONLMainWindow(this, new String(title + " (RLI) v." + ExpCoordinator.VERSION));
 		else
-		{
-		    if (title != null)
-			mainWindow = new ONLMainWindow(this, new String(title + " (RLI) v." + ExpCoordinator.VERSION));
-		    else
-			mainWindow = new ONLMainWindow(this, new String("Remote Laboratory Interface (RLI) v." + ExpCoordinator.VERSION));
-		}
+		    mainWindow = new ONLMainWindow(this, new String("Remote Laboratory Interface (RLI) v." + ExpCoordinator.VERSION));
+		
 	
 		mainWindow.setSize(550, 300);
 		mainWindow.addWindowListener(new MainWindowAdapter(this));
@@ -954,12 +939,12 @@ public class ExpCoordinator //implements Mode.MListener
 		initializeTopologyActions();
 		JMenu tmp_menu = mainWindow.addMenu(topologyActions, "Topology");
 		HardwareSpec.ManagerListener mlistener = new HardwareSpec.ManagerListener(tmp_menu);
-		if (!sppmon) mainWindow.getJMenuBar().add(new JButton(topology.getLinkToolAction()));
+		mainWindow.getJMenuBar().add(new JButton(topology.getLinkToolAction()));
 
 		statusDisplay = new StatusDisplay(this);
 		onlUndoManager.getCommitAction().addPropertyChangeListener(statusDisplay);
 
-		if (!sppmon && isTestLevel(EXTRAS)) mainWindow.addMenu(extraActions, "Extras");
+		if (isTestLevel(EXTRAS)) mainWindow.addMenu(extraActions, "Extras");
 
 		if (!properties.getPropertyBool(NOGUI))
 			mainWindow.setVisible(true);
@@ -971,115 +956,111 @@ public class ExpCoordinator //implements Mode.MListener
 		print(new String("Version:" + VERSION), 1);
 		HardwareSpec.Manager hwmanager = HardwareSpec.getTheManager();
 
-		if (!sppmon)
-		{
-		        //hwmanager.addFromResource("IXP", "IXP.hw");
-			hwmanager.addFromResource("PC1core", "PC1core.hw");
-			hwmanager.addFromResource("PC2core", "PC2core.hw");
-			hwmanager.addFromResource("PC8core1g", "PC8core1g.hw");
-			hwmanager.addFromResource("PC8core10g", "PC8core10g.hw");
-			hwmanager.addFromResource("VM", "VM.hw");
-			//hwmanager.addFromResource("PC48core", "PC48core.hw");
-			hwmanager.addSubtypeFromResource("VMsmall.shw");
-			hwmanager.addSubtypeFromResource("VM64bit.shw");
-			hwmanager.addSubtypeFromResource("VM64bit_2port.shw");
-			//hwmanager.addSubtypeFromResource("HOST1core.shw");
-			//hwmanager.addSubtypeFromResource("HOST2core.shw");
-			hwmanager.addSubtypeFromResource("HostFltrs1corewLimit.shw");
-			hwmanager.addSubtypeFromResource("HostFltrs2corewLimit.shw");
-			hwmanager.addSubtypeFromResource("SWR5_1.shw");
-			hwmanager.addSubtypeFromResource("SWR8.shw");
-			hwmanager.addSubtypeFromResource("SWR16.shw");
-			//hwmanager.addSubtypeFromResource("HOST48core.shw");
-			//hwmanager.addSubtypeFromResource("NPR.shw");
-			HardwareSpec ixp_spec = hwmanager.getHardware("IXP");
-			if (ixp_spec != null)
-				tmp_menu.add(new Cluster.IXPMenu(ixp_spec));
-			//add any subtypes we can find
-			/*SUBTYPE*/
-			java.io.File dir = getDefaultDir();
-			java.io.File[] s_list = dir.listFiles(new HardwareSpec.Subtype.SHWFileFilter());
-			java.io.File[] h_list = dir.listFiles(new HardwareSpec.HWFileFilter());
-			int num_hwtype = 0;
-			if (h_list != null) num_hwtype = Array.getLength(h_list);
-			int j = 0;
-			for (j = 0; j < num_hwtype; ++j)
-			{
-				hwmanager.addFromFile(h_list[j]);
-			}
-			int num_subtype = 0;//Array.getLength(s_list);
-			if (s_list != null) num_subtype = Array.getLength(s_list);
-			for (j = 0; j < num_subtype; ++j)
-			{
-				hwmanager.addSubtype(s_list[j]);
-			}
-			dir = new java.io.File(".");
-			h_list = dir.listFiles(new HardwareSpec.HWFileFilter());
-			if (h_list != null) num_hwtype = Array.getLength(h_list);
-			else num_hwtype = 0;//Array.getLength(h_list);
-			for (j = 0; j < num_hwtype; ++j)
-			{
-				hwmanager.addFromFile(h_list[j]);
-			}
-			s_list = dir.listFiles(new HardwareSpec.Subtype.SHWFileFilter());
-			if (s_list != null) num_subtype = Array.getLength(s_list);
-			else num_subtype = 0;//Array.getLength(s_list);
-			for (j = 0; j < num_subtype; ++j)
-			{
-				hwmanager.addSubtype(s_list[j]);
-			}   
-			dir = getONLDir();
-			h_list = dir.listFiles(new HardwareSpec.HWFileFilter());
-			if (h_list != null) num_hwtype = Array.getLength(h_list);
-			else num_hwtype = 0;//Array.getLength(h_list);
-			for (j = 0; j < num_hwtype; ++j)
-			{
-				hwmanager.addFromFile(h_list[j]);
-			}
-			s_list = dir.listFiles(new HardwareSpec.Subtype.SHWFileFilter());
-			if (s_list != null) num_subtype = Array.getLength(s_list);
-			else num_subtype = 0;//Array.getLength(s_list);
-			for (j = 0; j < num_subtype; ++j)
-			{
-				hwmanager.addSubtype(s_list[j]);
-			}   
-		}
+	
+		//hwmanager.addFromResource("IXP", "IXP.hw");
+		hwmanager.addFromResource("PC1core", "PC1core.hw");
+		hwmanager.addFromResource("PC2core", "PC2core.hw");
+		hwmanager.addFromResource("PC8core1g", "PC8core1g.hw");
+		hwmanager.addFromResource("PC8core10g", "PC8core10g.hw");
+		hwmanager.addFromResource("VM", "VM.hw");
+		//hwmanager.addFromResource("PC48core", "PC48core.hw");
+		hwmanager.addSubtypeFromResource("VMsmall.shw");
+		//hwmanager.addSubtypeFromResource("VM64bit.shw");
+		//hwmanager.addSubtypeFromResource("VM64bit_2port.shw");
+		//hwmanager.addSubtypeFromResource("HOST1core.shw");
+		//hwmanager.addSubtypeFromResource("HOST2core.shw");
+		hwmanager.addSubtypeFromResource("HostFltrs1corewLimit.shw");
+		hwmanager.addSubtypeFromResource("HostFltrs2corewLimit.shw");
+		hwmanager.addSubtypeFromResource("SWR5_1.shw");
+		hwmanager.addSubtypeFromResource("SWR8.shw");
+		hwmanager.addSubtypeFromResource("SWR16.shw");
+		//hwmanager.addSubtypeFromResource("HOST48core.shw");
+		//hwmanager.addSubtypeFromResource("NPR.shw");
+		//HardwareSpec ixp_spec = hwmanager.getHardware("IXP");
+		//if (ixp_spec != null)
+		//  tmp_menu.add(new Cluster.IXPMenu(ixp_spec));
+		//add any subtypes we can find
+		/*SUBTYPE*/
+		java.io.File dir = getDefaultDir();
+		java.io.File[] s_list = dir.listFiles(new HardwareSpec.Subtype.SHWFileFilter());
+		java.io.File[] h_list = dir.listFiles(new HardwareSpec.HWFileFilter());
+		int num_hwtype = 0;
+		if (h_list != null) num_hwtype = Array.getLength(h_list);
+		int j = 0;
+		for (j = 0; j < num_hwtype; ++j)
+		    {
+			hwmanager.addFromFile(h_list[j]);
+		    }
+		int num_subtype = 0;//Array.getLength(s_list);
+		if (s_list != null) num_subtype = Array.getLength(s_list);
+		for (j = 0; j < num_subtype; ++j)
+		    {
+			hwmanager.addSubtype(s_list[j]);
+		    }
+		dir = new java.io.File(".");
+		h_list = dir.listFiles(new HardwareSpec.HWFileFilter());
+		if (h_list != null) num_hwtype = Array.getLength(h_list);
+		else num_hwtype = 0;//Array.getLength(h_list);
+		for (j = 0; j < num_hwtype; ++j)
+		    {
+			hwmanager.addFromFile(h_list[j]);
+		    }
+		s_list = dir.listFiles(new HardwareSpec.Subtype.SHWFileFilter());
+		if (s_list != null) num_subtype = Array.getLength(s_list);
+		else num_subtype = 0;//Array.getLength(s_list);
+		for (j = 0; j < num_subtype; ++j)
+		    {
+			hwmanager.addSubtype(s_list[j]);
+		    }   
+		dir = getONLDir();
+		h_list = dir.listFiles(new HardwareSpec.HWFileFilter());
+		if (h_list != null) num_hwtype = Array.getLength(h_list);
+		else num_hwtype = 0;//Array.getLength(h_list);
+		for (j = 0; j < num_hwtype; ++j)
+		    {
+			hwmanager.addFromFile(h_list[j]);
+		    }
+		s_list = dir.listFiles(new HardwareSpec.Subtype.SHWFileFilter());
+		if (s_list != null) num_subtype = Array.getLength(s_list);
+		else num_subtype = 0;//Array.getLength(s_list);
+		for (j = 0; j < num_subtype; ++j)
+		    {
+			hwmanager.addSubtype(s_list[j]);
+		    }   
+		
 
-        Runtime.getRuntime().addShutdownHook(new Thread()
-        {
-            @Override
-            public void run()
-            {
-                System.out.println("Shutdown hook ran!");
-            	if (currentExperiment != null) currentExperiment.close();
-            }
-        });
+		Runtime.getRuntime().addShutdownHook(new Thread()
+		    {
+			@Override
+			public void run()
+			{
+			    System.out.println("Shutdown hook ran!");
+			    if (currentExperiment != null) currentExperiment.close();
+			}
+		    });
 
 		if (properties.getPropertyBool(NOGUI))
-			;//need to put something in that keeps this alive without the main window.
+		    ;//need to put something in that keeps this alive without the main window.
 	}
 
 	public void initializeTopologyActions()
 	{
-		topologyActions = new Vector();
-		if (!isSPPMon())
-		{
-			topologyActions.add(new Topology.DefaultRtsAction(topology));
-			topologyActions.add(new Topology.DefaultHostRtAction(topology));
-			topologyActions.add(new Topology.ClearRtsAction(topology));
-			//if (getDebugLevel() > 0) topologyActions.add(new Topology.RemoveRtsAction(topology));
-			//shows experiment password in separate window
-			topologyActions.add(new ONL.UserAction("Show VM Password", true, false)
-			{	
-				public void actionPerformed(ActionEvent e)
-				{
-					if (currentExperiment != null) currentExperiment.showGeneratedPW();
-				}
-			});
-			topologyActions.add(new ExpPasswordAction());
-			topologyActions.add(new AddVGigEAction(this));
-		}
-		topologyActions.add(new Topology.AddHWTypeAction());
+	    topologyActions = new Vector();
+	    topologyActions.add(new Topology.DefaultRtsAction(topology));
+	    topologyActions.add(new Topology.DefaultHostRtAction(topology));
+	    topologyActions.add(new Topology.ClearRtsAction(topology));
+	    //if (getDebugLevel() > 0) topologyActions.add(new Topology.RemoveRtsAction(topology));
+	    //shows experiment password in separate window
+	    topologyActions.add(new ONL.UserAction("Show VM Password", true, false)
+		{	
+		    public void actionPerformed(ActionEvent e)
+		    {
+			if (currentExperiment != null) currentExperiment.showGeneratedPW();
+		    }
+		});
+	    topologyActions.add(new ExpPasswordAction());
+	    topologyActions.add(new AddVGigEAction(this));
+	    topologyActions.add(new Topology.AddHWTypeAction());
 	}
 
 	public void initializeFileMenu()
@@ -1092,8 +1073,6 @@ public class ExpCoordinator //implements Mode.MListener
 				if (statusDisplay.isCommitted() || (!expIsWaiting()))
 				{
 					closeCurrentExp();
-					//if (isTestLevel(OBSTEST))
-					closeObserver();
 				}
 				else
 				{
@@ -1111,14 +1090,10 @@ public class ExpCoordinator //implements Mode.MListener
 		fileActions.add(tmp_action);
 
 		ExpFileAction efa;
-		if (!isSPPMon())
-		{
-			fileActions.add(onlUndoManager.getCommitAction());
-			fileActions.add(new Reservation.Action(this));
-			fileActions.add(new Reservation.ExtendAction(this));
-			fileActions.add(new Reservation.CancelAction(this));
-			
-		}
+		fileActions.add(onlUndoManager.getCommitAction());
+		fileActions.add(new Reservation.Action(this));
+		fileActions.add(new Reservation.ExtendAction(this));
+		fileActions.add(new Reservation.CancelAction(this));
 		//fileActions.add(new AdvancedMenuItem());
 		tmp_action = new ECMenuAction(this, SAVEFILE, "Save");
 		efa = new ExpFileAction(this, false);
@@ -1159,42 +1134,33 @@ public class ExpCoordinator //implements Mode.MListener
 
 	public void initializeExtraMenu()
 	{
-		extraActions = new Vector();
-		if (!isSPPMon())
+	    extraActions = new Vector();
+	    if (isTestLevel(MANAGER)) 
 		{
-			virtualAction = new VirtualTopology.VAction();
-			extraActions.add(virtualAction);
-			extraActions.add(new Observer.AddObserver());
-			extraActions.add(new Observer.GetObservable());
-			extraActions.add(new ExpCompare.CompareAction("Compare Sessions"));
-			if (isTestLevel(MANAGER)) 
+		    if (sessionRecorder != null) 
 			{
-				if (sessionRecorder != null) 
-				{
-					extraActions.add(sessionRecorder);
-					extraActions.add(sessionRecorder.getLoadAction());
-				}
-				extraActions.add((new ONL.UserAction("Print Debug Messages", true, false)
-				{
-					public void actionPerformed(ActionEvent e)
-					{
-						printer.printHistory();
-					}
-				}));
-				extraActions.add((new ONL.UserAction("Set Debug Level", true, false)
-				{
-					public void actionPerformed(ActionEvent e)
-					{
-						String rtn = JOptionPane.showInputDialog(mainWindow, "Set Debug Level", String.valueOf(debug));
-						debug = Integer.parseInt(rtn);
-					}
-				}));
+			    extraActions.add(sessionRecorder);
+			    extraActions.add(sessionRecorder.getLoadAction());
 			}
+		    extraActions.add((new ONL.UserAction("Print Debug Messages", true, false)
+			{
+			    public void actionPerformed(ActionEvent e)
+			    {
+				printer.printHistory();
+			    }
+			}));
+		    extraActions.add((new ONL.UserAction("Set Debug Level", true, false)
+			{
+			    public void actionPerformed(ActionEvent e)
+			    {
+				String rtn = JOptionPane.showInputDialog(mainWindow, "Set Debug Level", String.valueOf(debug));
+				debug = Integer.parseInt(rtn);
+			    }
+			}));
 		}
+		
 	}
-	public static boolean isSPPMon() { return (theCoordinator.properties.getPropertyBool(SPPMON));}
 	public static ONLMainWindow getMainWindow() { return (theCoordinator.mainWindow);}
-	public static VirtualTopology.VAction getVirtualAction() { return (theCoordinator.virtualAction);}
 	public MonitorManager getMonitorManager() 
 	{
 		return monitorManager;
@@ -1277,12 +1243,6 @@ public class ExpCoordinator //implements Mode.MListener
 	public Vector getExtraActions() { return (extraActions);}
 	public void setCurrentSelection(ONLComponent c) 
 	{
-		/*
-      if (c != null)
-	print(new String("ExpCoordinator.setCurrentSelection " + c.getLabel()), ExpCompare.TEST_CMP);
-      else
-	print("ExpCoordinator.setCurrentSelection null", ExpCompare.TEST_CMP);
-		 */
 
 		if (currentSelection.size() > 0)
 		{
@@ -1329,8 +1289,7 @@ public class ExpCoordinator //implements Mode.MListener
 		}
 		if (e == null) return;
 		print("ExpCoordinator.addEdit", TEST_ADD);
-		//if (isObserver() || isSnapshotView()) return;
-		if (isObserver() || isSnapshotView() || !isCurrentExpLive()) return;
+		if (isSnapshotView() || !isCurrentExpLive()) return;
 		if (compoundEdit != null) compoundEdit.addEdit(e);
 		else
 			onlUndoManager.addONLUndoable(e);
@@ -1338,8 +1297,7 @@ public class ExpCoordinator //implements Mode.MListener
 	public void addEditAt(ONLComponent.Undoable e, int i) 
 	{ 
 		print("ExpCoordinator.addEditAt", TEST_ADD);
-		//if (isObserver() || isSnapshotView()) return;
-		if (isObserver() || isSnapshotView() || !isCurrentExpLive()) return;
+		if (isSnapshotView() || !isCurrentExpLive()) return;
 		if (compoundEdit != null) compoundEdit.addEdit(e);
 		else
 			onlUndoManager.addONLUndoableAt(e, i);
@@ -1440,7 +1398,6 @@ public class ExpCoordinator //implements Mode.MListener
 		if (monitorManager != null) monitorManager.stopMonitoring();
 		//if (virtualAction != null) virtualAction.clearWindow();
 		if (currentExperiment != null) currentExperiment.close();
-		setOldSubnet(false);
 		onlUndoManager.clear();
 		statusDisplay.clear();
 		properties.removeExpListeners(currentExperiment);
@@ -1448,10 +1405,6 @@ public class ExpCoordinator //implements Mode.MListener
 		properties.setProperty(VIEW_SNAPSHOT, false);
 		properties.setProperty(TOPO_SET, false);
 	} 
-	protected void closeObserver()
-	{
-		if (Observer.theObserver != null) Observer.theObserver.close();
-	}
 	public void sendMessage(NCCP.Message msg) 
 	{ 
 		if (expDaemon.isConnected()) expDaemon.sendMessage(msg);
@@ -1480,10 +1433,9 @@ public class ExpCoordinator //implements Mode.MListener
 	public boolean isDirectConn() { return (directConn);}// || isTestLevel(NPTEST));}
 	public void setDirectConn(boolean b) { directConn = b;}
 	public boolean isConnected() 
-	{ return (isSPPMon() || ((proxy.isConnected() || directConn)&& expDaemon.isConnected()));}
+	{ return ((proxy.isConnected() || directConn)&& expDaemon.isConnected());}
 	public boolean connect() 
 	{ 
-		if (isSPPMon()) return true;
 		boolean rtn = false;
 		ExpCoordinator.printer.print("ExpCoordinator.connect");
 		if (!proxy.isConnected() && !directConn)
@@ -1506,7 +1458,6 @@ public class ExpCoordinator //implements Mode.MListener
 	}
 	public void addToProgressBar(ONLComponent c) 
 	{ 
-		if (isSPPMon()) return;
 		if (c instanceof Hardware)
 		    statusDisplay.increaseProgressMax(120);
 		else
@@ -1515,7 +1466,6 @@ public class ExpCoordinator //implements Mode.MListener
 	}
 	public void addToProgressBar(NCCPOpManager.Operation o) 
 	{ 
-		if (isSPPMon()) return;
 		statusDisplay.increaseProgressMax(30);
 		statusDisplay.waitForStatus(o);
 	}
@@ -1530,7 +1480,7 @@ public class ExpCoordinator //implements Mode.MListener
 	}
 	public void endCompoundEdit()
 	{
-		if (compoundEdit != null)
+ 		if (compoundEdit != null)
 			onlUndoManager.addONLUndoable(compoundEdit);
 		compoundEdit = null;
 	}
@@ -1583,14 +1533,6 @@ public class ExpCoordinator //implements Mode.MListener
 	}
 	public static void print(String s, int l) { if (printer != null) printer.print(s,l);}
 	public static void print(String s) {  if (printer != null) printer.print(s);}
-	public static void setObserve(boolean b) 
-	{
-		if (theCoordinator != null)
-		{
-			print(new String("ExpCoordinator.setObserve " + b), 2);
-			theCoordinator.properties.setProperty(OBSERVE, b);
-		}
-	}
 	public void addConnectionListener(NCCPConnection.ConnectionListener l) {expDaemon.addConnectionListener(l);}
 	public void removeConnectionListener(NCCPConnection.ConnectionListener l) {expDaemon.removeConnectionListener(l);}
 	public static boolean isTesting() { return (isTestLevel(ONLCDTEST));}
@@ -1618,8 +1560,6 @@ public class ExpCoordinator //implements Mode.MListener
 		}
 		f.setBounds(x_coord, y_coord, width, height);
 	}
-
-	public static boolean isObserver() { return (theCoordinator.properties.getPropertyBool(OBSERVE));}
 
 	public void addProxyTest()
 	{
@@ -1741,6 +1681,4 @@ public class ExpCoordinator //implements Mode.MListener
 		onlUndoManager.commit();
 	}
 	public static boolean isAdvanced() { return (theCoordinator.properties.getPropertyBool(ADVANCED));}
-	public static boolean isOldSubnet() { return oldSubnet;}
-	protected static void setOldSubnet(boolean b) { oldSubnet = b;}
 }

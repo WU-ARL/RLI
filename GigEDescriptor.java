@@ -88,93 +88,9 @@ public class GigEDescriptor extends ONLComponent
 			super(gige, new String("port" + p), new String(ONLComponent.VGIGE_LBL + ONLComponent.PORT_LBL), ec);
 			setID(p);
 			setInterfaceType(gige.getInterfaceType());
-			//setIPAddr();
 		}
 		public ONLGraphic getGraphic() { return (getParent().getGraphic());}
-		/*
-    private void setIPAddr()
-      {
-	if (getSubNetRouter() != null)
-	  {
-	      ONLComponent.PortInterface sn = getSubNetRouter();
-	      if (sn instanceof ONLComponent.PortInterface)
-		{
-		  if (subnetIndex != null && subnetIndex.getPortInterface() != sn)
-		    {
-		      subnetIndex.getPortInterface().freeIndex(subnetIndex());
-		      subnetIndex = null;
-		    }
-		  if (subnetIndex == null) 
-		    {
-		      subnetIndex = sn.getNewIndex();
-		      setIPAddr(subnetIndex.getIPAddr());
-		    }
-		}
-	    }
-	else
-	    {
-		String ip_base = ((GigEDescriptor)getParent()).getIPAddr();
-		if (ip_base != null) setBaseIPAddr(ip_base);
-		else setBaseIPAddr("192.168.50.50");
-	    }
-      }
-    protected void setBaseIPAddr(String ip_base)
-      {
-	if (ip_base != null)
-	  {
-	    ExpCoordinator.printer.print(new String("GigE.Port.getIPAddr ip_base = " + ip_base), 2);
-	    String[] strarray = ip_base.split("\\.");
-	    int tmp = Integer.parseInt(strarray[3]);
-	    tmp += (getID() - 1);
-	    setIPAddr(new String(strarray[0] + "." + strarray[1] + "." + strarray[2] + "." + tmp));
-	  }
-      else 
-	{
-	  ExpCoordinator.printer.print(new String("GigE.Port.getIPAddr ip_base = null"), 1);
-	  setIPAddr("");
-	}
-      }
-		 */
-		/*//SUBNET:remove
-    public void setSubNetRouter(ONLComponent.PortInterface c)
-    {
-	if (getSubNetRouter() == c) return;
-	super.setSubNetRouter(c);
-	//setIPAddr();
-	getParent().setSubNetRouter(c);
-	ONLComponent lt = getLinkedTo();
-	if (lt != null) lt.setSubNetRouter(c);
-	}*/
 		public Cluster.Instance getCluster() { return (getParent().getCluster());}
-		/*//SUBNET:remove
-    public ONLComponent.PortInterface.Index getNewIndex()
-      {
-	  if (getSubNetRouter() != null) return (getSubNetRouter().getNewIndex());
-	  else return null;
-      }
-    public void freeIndex(PortInterface.Index in)
-      {
-	  if (in.getPortInterface() != null) in.getPortInterface().freeIndex(in);
-      }
-    public boolean isUsedUp()
-      {
-	  if (getSubNetRouter() != null) return (getSubNetRouter().isUsedUp());
-	  else return false;
-      }
-    public int getNumFreeIndices() 
-      {
-	  if (getSubNetRouter() != null) return (getSubNetRouter().getNumFreeIndices());
-	  else return 0;
-      }
-    public int getNumInterfaces(Vector v) 
-      {
-	  if (!v.contains(this))
-	      {
-		  v.add(this);
-		  return (getParent().getNumInterfaces(v));
-	      }
-	  return 0;
-	  }*/
 		protected boolean merge(ONLComponent c)
 		{
 			if (c instanceof Port && ((Port)c).getID() == getID()) return true;
@@ -223,16 +139,11 @@ public class GigEDescriptor extends ONLComponent
 		public void setSize(int w, int h)
 		{
 			super.setSize(w,h);
-			//ExpCoordinator.printer.print("GigEDescriptor.Graphic.setSize " + w + "x" + h);
-			//Point p = getLocation();
-			//ellipse.setFrame(p.getX(), p.getY(), w, h);
 			ellipse.setFrame(0, 0, w, h);
 		}
 		public void setSize(double d)
 		{
 			this.setSize((int)d,(int)d);
-			//Point p = getLocation();
-			//ellipse.setFrame(p.getX(), p.getY(), (d-2), (d-2));
 		}
 		public void drawLabel(Graphics2D g2)
 		{
@@ -360,16 +271,7 @@ public class GigEDescriptor extends ONLComponent
 
 	private void initializePorts()
 	{
-		ports = new Vector();//Port[numPorts];
-		//ExpCoordinator.printer.print("GigEDescriptor::initializePorts numPorts = " + numPorts);
-		/*
-      for (int i = 0; i < numPorts; ++i)
-	{
-	  ports[i] = new Port(this, i, expCoordinator);
-	  addChild(ports[i]);
-	}
-      if (getIPAddr() == null) setIPAddr();
-		 */
+		ports = new Vector();
 	}
 
 	public ONLGraphic getGraphic()
@@ -378,77 +280,17 @@ public class GigEDescriptor extends ONLComponent
 		{
 			ExpCoordinator.print(new String("GigEDescriptor(" + getLabel() + ").getGraphic itype:" + getInterfaceType()), TEST_GRAPHIC);
 			graphic = new Graphic(this);
-			//graphic.addNodeListener(new ButtonAction(this));
 		}
 		return (graphic);
 	}
 
 
-	/*//SUBNET:remove
-  public void setSubNetRouter(ONLComponent.PortInterface c)
-    {
-      if (c != getSubNetRouter())
-	{
-	  ONLComponent lt = null;
-	  super.setSubNetRouter(c);
-	  int max = ports.size();
-	  for (int i = 0; i < max; ++i)
-	    {
-	      ((Port)ports.elementAt(i)).setSubNetRouter(c);
-		//lt = ports[i].getLinkedTo();
-		//if (lt != null) lt.setSubNetRouter(c);
-	    }
-	}
-	}
-	 */
-/*
-	public void setSubnet(SubnetManager.Subnet sn)
-	{
-		super.setSubnet(sn);
-		if (ExpCoordinator.isOldSubnet())
-		{
-			int max = ports.size();
-			for (int i = 0; i < max; ++i)
-			{
-				Port port = (Port)ports.elementAt(i);
-				ONLComponent c = port.getLinkedTo();
-				if (c != null) sn.addPort((ONLComponent.PortBase)c);
-			}
-		}
-	}
-	private void setRouterIndex(int ind) { setRouterIndex(ind, 1);}
-	private void setRouterIndex(int ind, int pind)
-	{
-		properties.setProperty(NSPINDEX, ind);
-		int nsp_ndx = ind;
-		int max = ports.size();
-		for (int i = 0; i < max; ++i)
-		{
-			Port port = (Port)ports.elementAt(i);
-			ONLComponent c = port.getLinkedTo();
-			if (c != null)
-				ExpCoordinator.print(new String(getLabel() + ".setRouterIndex " + ind + " port" + i + " linked to " + c.getLabel()), 5);
-			if (c != null && (c.getParent() instanceof HardwareHost))
-			{
-				char port_ch = portLabels.charAt((port.getID()));
-				c.setLabel(new String("n" + nsp_ndx + "p" + pind + port_ch));
-			}
-		}
-	}
-*/
 	public void setIPAddr(String ip)
 	{
 		if (ip != null)
 		{
 			setProperty(ONLComponent.IPADDR, ip);
 			addToDescription(ONLComponent.IPADDR, ip);
-			//Note:: should make ports property listeners but right now this is easiest
-			/*
-	 for (int i = 0; i < numPorts; ++i)
-	   {
-	       //ports[i].setBaseIPAddr(ip);
-	   }
-			 */
 		}
 	}
 	private void setIPAddr()
@@ -458,7 +300,6 @@ public class GigEDescriptor extends ONLComponent
 		int ndx = getPropertyInt(INDEX);
 		setIPAddr(new String("192.168." + GIGE_IP + "." + ndx));
 	}
-	//public String getIPAddr() { return (getProperty(ONLComponent.IPADDR));}
 	public Port getUnlinkedPort()
 	{
 		int max = ports.size();
@@ -482,7 +323,6 @@ public class GigEDescriptor extends ONLComponent
 			for (int j = min; j <= i; ++j)
 			{
 				p = new Port(this, j, expCoordinator);
-				//if (getSubNetRouter() != null) p.setSubNetRouter(getSubNetRouter()); //SUBNET:need subnet equivalent
 				ports.add(p);
 				addChild(p);
 			}
@@ -509,43 +349,13 @@ public class GigEDescriptor extends ONLComponent
 			if (lnkto != null) 
 			{
 				rtn.add(lnkto);
-				/*
-				Vector<ONLComponent.PortBase> lnkto_conn = lnkto.getConnectedPorts();
-				if (lnkto_conn != null && !lnkto_conn.isEmpty()) rtn.addAll(lnkto_conn);
-				*/
 			}
 		}
 		return rtn;
 	}
-	/*//SUBNET:remove
-  public int getNumInterfaces(Vector v) 
-    {
-	if (v.contains(this)) return 0;
-	int rtn = 0;
-	v.add(this);
-	int max = ports.size();
-	Port port;
-	for (int i = 0; i < max; ++i)
-	  {
-	    port = (Port)ports.elementAt(i);
-	    if (port.isLinked() && !(v.contains(port.getLinkedTo()))) 
-	      {
-		rtn += port.getLinkedTo().getNumInterfaces(v);
-	      }
-	  }
-	return rtn;
-    }
-	 */
 	public boolean isLinkable() 
 	{
 		return true;
-		/*
-	for (int i = 0; i < numPorts; ++i)
-	  {
-	    if (!ports[i].isLinked()) return (super.isLinkable());
-	  }
-	return false;
-		 */
 	}
 
 	public void writeXML(XMLStreamWriter xmlWrtr) throws XMLStreamException

@@ -291,7 +291,6 @@ public class ExperimentXML extends DefaultHandler
 		file = f;
 		if (!monitorOnly)
 		{
-			ExpCoordinator.setOldSubnet(false);
 			experiment.setFile(f);
 		}
 	}
@@ -305,8 +304,6 @@ public class ExperimentXML extends DefaultHandler
 				experiment.setLabel(attributes.getValue("expName"));
 				//experiment.setVersion(attributes.getValue("version"));
 				version = Double.parseDouble(attributes.getValue("version"));
-				if (version < 6.5) ExpCoordinator.setOldSubnet(true);
-				if (attributes.getValue(OLDSUBNET) != null) ExpCoordinator.setOldSubnet(true);
 				if (attributes.getValue(GENERATED_PW) != null) experiment.setGeneratedPW(attributes.getValue(GENERATED_PW));
 				currentElement = new String(localName);		      
 			}
@@ -328,12 +325,6 @@ public class ExperimentXML extends DefaultHandler
 			if (localName.equals(TOPO))
 			{
 				currentElement = new String(localName);		      
-			}
-			
-			if (localName.equals(VTOPO))
-			{
-				currentElement = new String(localName);	
-				setContentHandler(experiment.getVirtualTopology().getContentHandler(this));
 			}
 			 
 			if (localName.equals(CLUSTER) && currentElement.equals(TOPO))
@@ -415,10 +406,9 @@ public class ExperimentXML extends DefaultHandler
 		ONLComponent.PortBase end_comp = (ONLComponent.PortBase)((LinkDescriptor)c).getPoint2();
 		//SUBNET:add call SubnetManager addLink here
 		try {
-			if (ExpCoordinator.isOldSubnet()) OldSubnetManager.addLink(start_comp, end_comp);
-			else SubnetManager.addLink(start_comp, end_comp);
+			SubnetManager.addLink(start_comp, end_comp);
 			experiment.addLink(c);
-		}catch(SubnetManager.SubnetException e)
+		} catch(SubnetManager.SubnetException e)
 		{
 			ExpCoordinator.print(new String("ExperimentXML.addLink failed (" + start_comp.getLabel() + ", " + end_comp.getLabel() + ") -- " + e.getMessage()));
 		}

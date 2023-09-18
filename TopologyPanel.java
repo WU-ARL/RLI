@@ -278,7 +278,7 @@ public class TopologyPanel extends JLayeredPane implements ListDataListener
 					if (nd instanceof HardwareGraphic)
 					{
 						//((HardwareGraphic)nd).setSize(82);//70);
-						if (!ExpCoordinator.isSPPMon()) ((HardwareGraphic)nd).addPortListener(linktool.getButtonAction());
+						((HardwareGraphic)nd).addPortListener(linktool.getButtonAction());
 						((HardwareGraphic)nd).addNodeListener(componentSelector);
 						//nd.addComponentListener(c.getGraphicsListener());
 						setRouterLocation(nd);
@@ -493,7 +493,7 @@ public class TopologyPanel extends JLayeredPane implements ListDataListener
 				//System.out.println("TopologyPanel::intervalRemoved onlComponent is " + elem.getONLComponent().getLabel());
 				if (elem instanceof HardwareGraphic)
 				{
-					if (!ExpCoordinator.isSPPMon()) ((HardwareGraphic)elem).removePortListener(linktool.getButtonAction());
+					((HardwareGraphic)elem).removePortListener(linktool.getButtonAction());
 					((HardwareGraphic)elem).removeNodeListener(componentSelector);
 					--numRouters;
 				}

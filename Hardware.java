@@ -303,45 +303,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		}
 	}
 
-	//////////////////////////////////////////////// SPPMonCPAction ///////////////////////////////////////////////////////////////////
 
-	protected static class SPPMonCPAction extends AbstractAction //implements ListSelectionListener, KeyListener
-	{
-		private Hardware hardware = null;
-		public SPPMonCPAction(Hardware r)
-		{
-			super("Set Daemon");
-			hardware = r;
-		}
-		public void actionPerformed(ActionEvent e) 
-		{
-			TextFieldwLabel tfield = new TextFieldwLabel(30, "daemon addr:");
-			String tmp = hardware.getProperty(CPHOST);
-			if (tmp != null) tfield.setText(tmp);
-			TextFieldwLabel tfield2 = new TextFieldwLabel(30, "daemon port:");
-			String tmp2 = hardware.getProperty(CTL_PORT_STR);
-			if (tmp2 != null) tfield2.setText(tmp2);
-			final String opt0 = "Enter";
-			final String opt1 = "Cancel";
-			Object[] options = {opt0,opt1};
-			Object[] fields = {tfield, tfield2};
-
-			int rtn = JOptionPane.showOptionDialog((hardware.getGraphic()), 
-					fields, 
-					"Specify Daemon", 
-					JOptionPane.YES_NO_OPTION,
-					JOptionPane.QUESTION_MESSAGE, 
-					null,
-					options,
-					options[0]);
-
-			if (rtn == JOptionPane.YES_OPTION)
-			{
-				hardware.setProperty(CPREQ, tfield.getText());
-				hardware.setCPAddr(tfield.getText(), tfield2.getInt());
-			}
-		}
-	}
 
 	/////////////////////////////////////////////////////// Hardware.Port ///////////////////////////////////////////////////////////////////////////
 	public static class Port extends ONLComponent.PortBase implements NCCPOpManager.Manager,Field.Owner
@@ -785,14 +747,9 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			if (getSubnet() != null) 
 			{
 				xmlWrtr.writeAttribute(ExperimentXML.SUBNET, String.valueOf(getSubnet().getIndex()));
-				if (ExpCoordinator.isOldSubnet()) xmlWrtr.writeAttribute(ExperimentXML.SUBNET_ID, String.valueOf(((OldSubnetManager.Subnet)getSubnet()).getSubIndex()));
 				ONL.IPAddress tmp_ip = getIPAddr();
 				byte sub_ndx = tmp_ip.getBytes()[3];
 
-				if (ExpCoordinator.isOldSubnet())
-				{
-					sub_ndx = (byte)(sub_ndx - ((OldSubnetManager.Subnet)getSubnet()).getSubIndex());
-				}
 				xmlWrtr.writeAttribute(ExperimentXML.SUBNET_INDEX, String.valueOf(sub_ndx));
 			}
 			xmlWrtr.writeStartElement(ExperimentXML.FIELDS);
@@ -1171,36 +1128,17 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 				ExpCoordinator.print(new String("Hardware.HWContentHandler.startElement " + getCurrentElement() + " for " + getComponent().getLabel() + " adding port handler"), 3);
 				Hardware.Port port = ((Hardware)getComponent()).getPort(Integer.parseInt(attributes.getValue(ExperimentXML.INDEX)));
 				if (attributes.getValue(ExperimentXML.SUBNET) != null)
-				{		
-					if (!ExpCoordinator.isOldSubnet())
+				{	
+				    try
 					{
-						try
+					    SubnetManager.Subnet sn = SubnetManager.getSubnet(Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET)));
+					    int sni = Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET_INDEX));
+					    if (sn != null) 
 						{
-							SubnetManager.Subnet sn = SubnetManager.getSubnet(Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET)));
-							int sni = Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET_INDEX));
-							if (sn != null) 
-							{
-								sn.addPort(port, sni);
-								ExpCoordinator.print(new String("    adding port(" + port.getLabel() + ") to subnet:" + sn.getIndex() + " index:" + sni), ExperimentXML.TEST_XML); 
-							}
-						} catch (SubnetManager.SubnetException e){ ExpCoordinator.print(new String("Hardware.HWContentHandler.startElement error:" + e.getMessage()));}
-					}
-					else //Old Subnet: 
-					{
-						if (attributes.getValue(ExperimentXML.SUBNET) != null)
-						{
-							try
-							{
-								OldSubnetManager.Subnet sn = OldSubnetManager.getSubnetFromSubIndex(Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET)), Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET_ID)));
-								int sni = Integer.parseInt(attributes.getValue(ExperimentXML.SUBNET_INDEX));
-								if (sn != null) 
-								{
-									sn.addPort(port, sni);
-									ExpCoordinator.print(new String("    adding port to subnet:" + sn.getIndex() + "/" + sn.subIndex + " index:" + sni), ExperimentXML.TEST_XML); 
-								}
-							} catch (SubnetManager.SubnetException e){ ExpCoordinator.print(new String("Hardware.HWContentHandler.startElement error:" + e.getMessage()));}
+						    sn.addPort(port, sni);
+						    ExpCoordinator.print(new String("    adding port(" + port.getLabel() + ") to subnet:" + sn.getIndex() + " index:" + sni), ExperimentXML.TEST_XML); 
 						}
-					}
+					} catch (SubnetManager.SubnetException e){ ExpCoordinator.print(new String("Hardware.HWContentHandler.startElement error:" + e.getMessage()));}
 				}
 				expXML.setContentHandler(port.getContentHandler(expXML));
 			}
@@ -1213,33 +1151,9 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			if (getCurrentElement().equals(ExperimentXML.CPADDR)) 
 			{
 				getComponent().setProperty(CPREQ, new String(ch, start, length));
-				if (ExpCoordinator.isSPPMon()) ((Hardware)getComponent()).setCPHost(new String(ch, start, length));
 			}
 			if (getCurrentElement().equals(ExperimentXML.CPPORT)) 
 				getComponent().setProperty(ExperimentXML.CPPORT, new String(ch, start, length));
-			/*
-      if (getCurrentElement().equals(ExperimentXML.FILE) || getCurrentElement().equals(ExperimentXML.RESOURCE)) 
-	{
-	  Hardware hw_comp = (Hardware)getComponent();
-	  if (hw_comp.hwtype == null) 
-	    {
-	      hw_comp.setHWSubtype(HardwareSpec.readID(hwtpname, new String(ch, start, length)));
-	      if (hw_comp.hwtype != null) 
-		ExpCoordinator.print(new String("Hardware.HWContentHandler hwtype:" + hwtype.getTypeLabel()), HardwareBaseSpec.TEST_SUBTYPE);
-	      else 
-		ExpCoordinator.print("Hardware.HWContentHandler hwtype:null", HardwareBaseSpec.TEST_SUBTYPE);
-	    }
-	   else
-	    {
-	      HardwareSpec.Subtype hw_type = hwtype.readSubtypeID(tpname, is_rtr, new String(ch, start, length));
-	      if (hw_type != null)
-	      {
-	      hw_comp.setProperty(ONL.VERSION_TOK, hw_type.getVersion());
-	      hw_comp.setHWSubtype(hw_type);
-	      }
-	      }
-	}
-			 */
 		}
 		protected void initialize() 
 		{ 
@@ -1254,11 +1168,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 				if (position != null) getComponent().getGraphic().setLocation(position);
 				component.getGraphic().setSpinnerPosition(spinner);
 				//update main route table if there is one
-				//HWTable hwtable = (HWTable)((Hardware)getComponent()).getTableByType(ExperimentXML.ROUTE_TABLE);
-				//if (hwtable != null && hwtable instanceof HWRouteTable)
-				//{
-					//((HWRouteTable)hwtable).setNextHops();
-				//}
 			}
 			if (localName.equals(ExperimentXML.SUBHWTYPE))
 			{
@@ -1269,14 +1178,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 				}
 				else
 					ExpCoordinator.print(new String("Hardware.HWContentHandler.endElement " + localName + " null"), HardwareBaseSpec.TEST_SUBTYPE);
-				/*
-	  if ((((Hardware)getComponent()).getHWSubtype() == null) && hwtype != null)
-	    {
-	      HardwareSpec.Subtype hw_type = hwtype.getDefaultSubtype();
-	      getComponent().setProperty(ONL.VERSION_TOK, hw_type.getVersion());
-	      ((Hardware)getComponent()).setHWSubtype(hw_type);
-	    }
-				 */
 			}
 		}
 	}//end class Hardware.hwContentHandler
@@ -1486,20 +1387,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			}
 		}
 	} 
-	//public Hardware(String lbl, String cp, ExpCoordinator ec, HardwareSpec hw_type)
-	//{
-	// this(lbl, ec, hw_type);
-	// setCPHost(cp);
-	// ((NodeMonitor)monitorable).initializeDaemons(daemons);
-	//initializePorts();
-	//}  
-	/*
-  public boolean isRouter()
-  {
-    if (hwType != null) return (hwType.isRouter());
-    else return false;
-  }
-	 */
 	public void addDaemon(int tp, int port)
 	{
 		addDaemon(tp, port, expCoordinator.isDirectConn());
@@ -1654,7 +1541,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			}
 		}
 		if (!there) setProperty(ONLComponent.PORTS_INIT, true);
-		if (ExpCoordinator.isOldSubnet() && getBaseIPAddr() != null) setBaseIPAddr(getBaseIPAddr());
 	}
 	public void writeExpDescription(ONL.Writer tw)  throws IOException
 	{
@@ -1674,12 +1560,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		xmlWrtr.writeEndElement(); //end expaddr
 		if (getCPAddr() != null)
 		{
-			if (ExpCoordinator.isSPPMon())
-			{
-				xmlWrtr.writeStartElement(ExperimentXML.CPPORT);
-				xmlWrtr.writeCharacters(getProperty(ExperimentXML.CPPORT));
-				xmlWrtr.writeEndElement(); //end cpport
-			}
 			xmlWrtr.writeStartElement(ExperimentXML.CPADDR);
 			xmlWrtr.writeCharacters(getCPAddr());
 			xmlWrtr.writeEndElement(); //end cpaddr
@@ -1866,15 +1746,10 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			initializeMonitorable();
 		}
 		actions.add(new UserLabelAction(this));
-		if (ExpCoordinator.isSPPMon()) 
-		{
-			actions.add(new LabelAction(this));
-			actions.add(new SPPMonCPAction(this));
-		}
 		if (getExpCoordinator().isManagement())
 		{
 			if (buttonAction == null) buttonAction = new ButtonAction(this);
-			if (!ExpCoordinator.isSPPMon()) actions.add(new CPAction(this));
+			actions.add(new CPAction(this));
 		} 
 
 		if (hwType != null && rebootCommand == null && hwType.getRebootSpec() != null) rebootCommand = new Command(hwType.getRebootSpec(), this);
@@ -1946,11 +1821,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		hwType = stp;
 		ExpCoordinator.print(new String("Hardware.setHWSubtype hwType:" + hwType.getLabel()), HardwareBaseSpec.TEST_SUBTYPE);
 		initialize(null);
-	}
-	protected VirtualTopology.VNodeSubtype getVirtualType() 
-	{ 
-		if (hwType != null) return (hwType.getVirtualType());
-		else return null;
 	}
 	public int getReturnIndex() { return returnIndex;}
 	public Vector getActions() { return actions;}
@@ -2121,10 +1991,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			if (lnkto != null) 
 			{
 				rtn.add(lnkto);
-				/*
-				Vector<ONLComponent.PortBase> lnkto_conn = lnkto.getConnectedPorts();
-				if (lnkto_conn != null && !lnkto_conn.isEmpty()) rtn.addAll(lnkto_conn);
-				*/
 			}
 		}
 		return rtn;
@@ -2196,25 +2062,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		if (ports != null) 
 		{
 			max = ports.size();
-			if (ExpCoordinator.isOldSubnet())
-			{
-				Port tmp_port;
-				OldSubnetManager.Subnet sn;
-				String[] strarray = ipaddr.split("\\.");
-				int ndx = Integer.parseInt(strarray[2]);
-				for (int i = 0; i < max; ++i)
-				{
-					tmp_port = getPort(i);
-					sn = OldSubnetManager.getSubnet(ndx, i);
-					try{
-						sn.addPort(tmp_port);
-					}catch (SubnetManager.SubnetException e)
-					{
-						ExpCoordinator.print(new String("Hardware(" + getLabel() + ").setBaseIPAddr " + ipaddr + " error:" + e.getMessage()));
-					}
-					sn.setOwner(tmp_port);
-				}
-			}
 		}
 	}
 	public String getCPHost() { return (properties.getProperty(CPHOST));}
@@ -2323,45 +2170,7 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		if (opManager == null) opManager = new OpManager((MonitorDaemon)getONLDaemon(ONLDaemon.HWC));
 		return opManager;
 	}
-	/*
-    public NCCPOpManager getListOpManager()
-    { 
-      if (listOpManager == null) listOpManager = new FieldListOpManager((MonitorDaemon)getONLDaemon(ONLDaemon.HWC));
-      return listOpManager;
-    }
-	 */
 	public void setOpManager(NCCPOpManager opman) { opManager = opman;}
-	/*//SUBNET:remove
-    public int getNumInterfaces(Vector v) 
-    {
-      if (v.contains(this)) return 0;
-      int rtn = 0;
-      Port pelem;
-      v.add(this);
-      for (int i = 0; i < numPorts; ++i)
-	{
-	  pelem = (Port)ports.elementAt(i);
-	  if (pelem.isLinked() && !(v.contains(pelem.getLinkedTo()))) 
-	    {
-	      rtn += pelem.getLinkedTo().getNumInterfaces(v);
-	    }
-		    else rtn += 1;
-	}
-      return rtn;
-    }
-	 */
-	/*//SUBNET:remove
-  public void setSubNetRouter(ONLComponent.PortInterface c)
-    {
-      if (!isRouter() && c != getSubNetRouter())
-	{
-	  super.setSubNetRouter(c);
-	  for (int i = 0; i < numPorts; ++i)
-	    {
-	      ((Port)ports.elementAt(i)).setSubNetRouter(c);
-	    }
-	}
-	}*/
 
 	public void addRoute(String ip, int mask, int nhp, ONL.IPAddress nhip)
 	{
@@ -2391,18 +2200,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			}
 		}
 	}
-	/*
-	public void addRoute(String ip, int mask, NextHop nh)
-	{
-		Hardware.Port tmp_port;
-		HWRouteTable rt = null;
-		for (int i = 0; i < numPorts; ++i)
-		{
-			tmp_port = (Hardware.Port)ports.elementAt(i);
-			tmp_port.addRoute(ip, mask, nh);
-		}
-	}
-	*/
 	public void generateDefaultRts()
 	{
 		Hardware.Port tmp_port;
@@ -3049,29 +2846,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		}
 		public boolean isPositive() { return is_positive;} //true if rate is never negative
 
-		/*    protected MDataType(ONLComponent c,  CommandSpec cspec, Object[] vals)
-      {
-	super(ONLDaemon.HWC, MonitorDataType.HWCOMMAND, cspec.getLabel(), cspec.getUnits());
-        if (cspec.isMonitor())
-          paramType = MonitorDataType.HWMONITOR;
-        //setIsRate(false);
-	monitorID = cspec.getOpcode();
-        command = cspec.createCommand(c);//new Command(cspec, c);
-	command.setCurrentValues(vals);
-        setONLComponent(c);
-        //paramValues = vals;
-        numParams = cspec.getNumParams();
-        setIsRate(cspec.isRate());
-	if (c instanceof Hardware && (c.getProperty(Hardware.INDEX) != null))
-	  setName(getName().concat((String)c.getProperty(Hardware.INDEX)));
-	if (c instanceof Hardware.Port && (c.getParent().getProperty(Hardware.INDEX) != null))
-	  {
-	    port = ((Hardware.Port)c).getID();
-	    setName(getName().concat(new String(c.getParent().getProperty(Hardware.INDEX) + "." + port)));
-	  }
-      }
-		 */
-
 		protected void setDescription()
 		{
 			if (numParams > 0)
@@ -3337,32 +3111,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 		private int index = 0;
 
 		/////////////////////////////////////////////////// MMI methods ////////////////////////////////////////////////////////////////////////////
-		/* 
-       public MMenuItem(Hardware.Port hwip, Hardware.Port.Monitorable mon, Command cs) { this(hwip, mon, cs, false);}
-       public MMenuItem(Hardware.Port hwip, Hardware.Port.Monitorable mon, Command cs, boolean noListener)
-       {
-       this(cs.getLabel(), hwip, mon, cs, noListener);
-       }
-       public MMenuItem(String lbl, Hardware.Port hwip, Hardware.Port.Monitorable mon, Command cs, boolean noListener)
-       {
-       super(cs.getLabel(), noListener, mon.getMonitorManager(), mon, null);
-       monitors = new Vector();
-       command = cs;
-       port = hwip;
-       }
-       public MMenuItem(Hardware hwi, Command cs) { this(hwi, cs, false);}
-       public MMenuItem(Hardware hwi, Command cs, boolean noListener)
-       {
-       this (cs.getLabel(), hwi, cs, noListener);
-       }
-       public MMenuItem(String lbl, Hardware hwi, Command cs, boolean noListener)
-       {
-       super(lbl, noListener, hwi.getMonitorable().getMonitorManager(), hwi.getMonitorable(), null);
-       monitors = new Vector();
-       command = cs;
-       hardware = hwi;
-       }
-		 */
 		public MMenuItem(ONLComponent oc, Command cmd) { this(oc, cmd, false);}
 		public MMenuItem(ONLComponent oc, Command cmd, boolean noListener) { this (cmd.getLabel(), oc, cmd, noListener);}
 		public MMenuItem(String lbl, ONLComponent oc, Command cmd, boolean noListener)
@@ -3384,23 +3132,6 @@ public class Hardware extends ONLComponent implements NCCPOpManager.Manager,Fiel
 			dt = new  MDataType(onlComponent, cmd, cmd.getCurrentValues()); 
 			dt.setPollingRate(mpo.getPollingRate());
 			dt.setONLComponent(onlComponent);
-			/*
-	  if (port != null)
-	  {
-	  dt = new  MDataType(port, command, command.getCurrentValues()); 
-	  dt.setPollingRate(mpo.getPollingRate());
-	  dt.setONLComponent(port);
-	  }
-	  else 
-	  {
-	  if (hardware != null)
-	  {
-	  dt = new MDataType(hardware, command, command.getCurrentValues());
-	  dt.setPollingRate(mpo.getPollingRate());
-	  dt.setONLComponent(hardware);
-	  }
-	  }
-			 */
 			return dt;
 		}
 		public MonitorMenuItem.MMLParamOptions getParamOptions() 

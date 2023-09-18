@@ -320,14 +320,10 @@ public class MultiLineGraph extends NumberGraph implements LogScale.Scaleable
 			}
 			public void mouseClicked(MouseEvent e)
 			{
-				//if (e.getClickCount() >= 2)
-				//{
-				boolean tmp_edit = !(ExpCoordinator.isObserver());
+			        boolean tmp_edit = true;
 				MonitorDataType.DescriptionDialog desc = new MonitorDataType.DescriptionDialog(plot.keyEntry);
 				JCheckBox dashedButton = new JCheckBox("Dashed Line");
 				dashedButton.setEnabled(tmp_edit);
-				//TextFieldwLabel scale_field = new TextFieldwLabel(20, "Scaling Factor:");
-				//scale_field.setValue(plot.scale);
 				Units.EditablePanel scalePanel = plot.dataUnits.getEditablePanel(tmp_edit);
 				Object[] suffix = {scalePanel,dashedButton};
 				if (plot.getStrokeType().equals(DASHED_LINE)) dashedButton.setSelected(true);

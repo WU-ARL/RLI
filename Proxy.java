@@ -60,7 +60,6 @@ public class Proxy extends NodeLabel
 	private Vector awaitingReply = null;
 	private Vector connections = null;
 	private short sessionID = 0;
-	private boolean observer = false; // marked true if currently observing a connection
 
 	//command codes
 	private static final short ECHO = 0;
@@ -214,8 +213,6 @@ public class Proxy extends NodeLabel
 			if (r.succeeded()) 
 			{
 				ExpCoordinator.print("     succeeded", 3);
-				if (ExpCoordinator.isObserver()) observer = true;
-				//ExpCoordinator.theCoordinator.setObserve(true);
 				connection.setCID(r.getConnectionID());
 				connection.setConnected(true);
 			}
@@ -296,8 +293,6 @@ public class Proxy extends NodeLabel
 			if (r.succeeded()) 
 			{
 				connection.setConnected(false); 
-				if (connection.isPeer())// && ExpCoordinator.isTestLevel(ExpCoordinator.OBSTEST)) 
-					observer = false;
 			}   
 			else connection.setConnected(true);
 			super.processReply(r);
@@ -499,7 +494,6 @@ public class Proxy extends NodeLabel
 				{            
 					public void propertyChange(PropertyChangeEvent e)
 					{
-						//ExpCoordinator.print(new String("ONL.UserAction.propertyChange action " + getValue(Action.NAME) + " ignore = " + ignoreObsStatus + " isobserver = " + ExpCoordinator.isObserver()), 3);
 						if (e.getPropertyName().equals(ExpCoordinator.RECORDING))
 						{
 							String val = (String)e.getNewValue();
@@ -573,8 +567,7 @@ public class Proxy extends NodeLabel
 													ExpCoordinator.print("     succeeded", 4);
 													c.setCID(r.getConnectionID());
 													c.setConnected(true);
-													if (ExpCoordinator.isObserver()) observer = true;
-													//ExpCoordinator.theCoordinator.setObserve(true);
+													
 													ExpCoordinator.print("Proxy share message set connection", 8);
 												}
 												else ExpCoordinator.print("     failed", 4);
@@ -587,8 +580,6 @@ public class Proxy extends NodeLabel
 											{
 												ExpCoordinator.print(new String("Proxy.run CloseConnection " + r.toString()), 4);
 												c.setConnected(false); 
-												if (c.isPeer())// && ExpCoordinator.isTestLevel(ExpCoordinator.OBSTEST))
-													observer = false;
 											}
 										}
 									}
@@ -642,7 +633,7 @@ public class Proxy extends NodeLabel
 			if (c.isPeer()) fmsg = new ForwardMessage(msg, c, PEER_FORWARD);
 			else 
 			{
-				if (!observer) fmsg = new ForwardMessage(msg, c);
+				fmsg = new ForwardMessage(msg, c);
 			}
 			if (fmsg != null) send(fmsg);
 		}
@@ -650,7 +641,6 @@ public class Proxy extends NodeLabel
 
 	public void sendMessage(ControlMessage cm)
 	{
-		if (observer && !(cm instanceof CloseMessage && cm.connection.isPeer())) return;
 		if (!awaitingReply.contains(cm))
 			awaitingReply.add(cm);
 		cm.setMessageID(getNextMessageID());
@@ -762,16 +752,13 @@ public class Proxy extends NodeLabel
 		{
 			if (conn.isPeer())
 			{
-				ShareMessage smsg = new ShareMessage(conn);
-				sendMessage(smsg);
+			    ShareMessage smsg = new ShareMessage(conn);
+			    sendMessage(smsg);
 			}
 			else
 			{
-				if (!observer)
-				{
-					OpenMessage omsg = new OpenMessage(conn);
-					sendMessage(omsg);
-				}
+			    OpenMessage omsg = new OpenMessage(conn);
+			    sendMessage(omsg);
 			}
 		}
 	}
@@ -837,7 +824,6 @@ public class Proxy extends NodeLabel
 		return testMenu;
 	}
 
-	//  public boolean isObserver() { return observer;}
 
 	//////////////////////////////////////////////////////// Test Menu Class //////////////////////////////////////////////////////////////////////////////////
 	private class TestMenu extends JMenu

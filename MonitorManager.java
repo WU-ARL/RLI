@@ -1242,10 +1242,7 @@ public class MonitorManager implements MenuFileAction.Saveable//, Mode.Manager
 	{
 		if (mdt == null) return null;
 		MonitorPlus rtn = null;
-		//if (ExpCoordinator.isObserver())
-			//{
 		ExpCoordinator.print(new String("MonitorManager.getMonitor for mdt:" + mdt.getName()), TEST_LOADING);
-		//  }
 		mdt.print(TEST_LOADING);
 		if (mdt.isLiveData())
 		{
@@ -1258,10 +1255,6 @@ public class MonitorManager implements MenuFileAction.Saveable//, Mode.Manager
 			}
 			else ExpCoordinator.print(new String("   no monitorable for " +  mdt.getONLComponent().getLabel()), TEST_LOADING);
 		}
-		//if (mdt.isLogFile())
-		//{
-		//rtn = logFileRegistry.addMonitorToFile((MonitorDataType.LogFile)mdt);
-		//}
 		if (mdt.isMonitorFunction())
 		{
 			rtn = new MonitorAlgFunction((MonitorDataType.MFormula)mdt, ExpCoordinator.theCoordinator.getMonitorManager());

@@ -167,7 +167,6 @@ public abstract class NCCPConnection extends NodeLabel
 			ExpCoordinator.printer.print("NCCPConnection.connect proxy null");
 			return false;
 		}
-		if (ExpCoordinator.isSPPMon()) return (connectSPPMon());
 		if (state == ConnectionEvent.CONNECTION_CLOSED || state == ConnectionEvent.CONNECTION_FAILED)
 		{
 			state = ConnectionEvent.CONNECTION_PENDING;
@@ -184,91 +183,7 @@ public abstract class NCCPConnection extends NodeLabel
 		*/
 		return true;
 	}
-
-	private boolean connectSPPMon()
-	{
-	if (state == ConnectionEvent.CONNECTION_PENDING)
-	{
-		ExpCoordinator.print(new String("NCCPConnection(" + host + ", " + port +").connect connection pending"), 0);
-		while(state == ConnectionEvent.CONNECTION_PENDING) 
-		{
-			try { Thread.sleep(500);}
-			catch(java.lang.InterruptedException e){}
-		}
-		return (isConnected());
-	}
-
-	state = ConnectionEvent.CONNECTION_PENDING;
-	if (nonProxy != null)
-	{
-		try { nonProxy.connect();}
-		catch(UnknownHostException e) 
-		{
-			boolean rtn = informUserError("Don't know about host: " + host + ":" + e.getMessage());
-			return rtn;
-		}
-		catch (SocketTimeoutException e)
-		{
-			boolean rtn = informUserError("Socket time out for " + host + ":" + e.getMessage());
-			return rtn;
-		}
-		catch (IOException e) 
-		{
-			boolean rtn = informUserError("Couldnt get I/O for " + host+ ":" + e.getMessage());
-			return rtn;
-		}
-	}
-	return (isConnected());
-	}
-
-	protected boolean informUserError(String msg) //this is just for SPPmon
-	{
-		if (!ExpCoordinator.isSPPMon()) return false;
-		final String opt0 = "Try Again";
-		final String opt1 = "Cancel";
-		JLabel lbl = new JLabel(msg);
-		TextFieldwLabel tfaddress = new TextFieldwLabel(30, "daemon addr:");
-		tfaddress.setText(host);
-		TextFieldwLabel tfport = new TextFieldwLabel(30, "daemon port:");
-		tfport.setText(String.valueOf(port));
-		Object[] params = {lbl, tfaddress, tfport};
-		Object[] options = {opt0,opt1};
-		int rtn =  JOptionPane.showOptionDialog(ExpCoordinator.getMainWindow(), 
-				params, 
-				"Connection Error", 
-				JOptionPane.YES_NO_OPTION,
-				JOptionPane.WARNING_MESSAGE, 
-				null,
-				options,
-				options[0]);
-		if (rtn == JOptionPane.NO_OPTION) 
-		{
-			connectionFailed();
-			return false;
-		}
-		else
-		{
-			String tmp_host = host;
-			boolean change = false;
-			if (tfaddress.getText().length() > 0) tmp_host = tfaddress.getText();
-			int tmp_port = port;
-			if (tfport.getText().length() > 0) tmp_port = Integer.parseInt(tfport.getText());
-			if (!tmp_host.equals(host)) 
-			{
-				host = new String(tmp_host);
-				change = true;
-			}
-			if (port != tmp_port) 
-			{
-				port = tmp_port;
-				change = true;
-			}
-			if (change)
-				fireEvent(new ConnectionEvent(this,ConnectionEvent.ADDRESS_CHANGED));
-			state = ConnectionEvent.CONNECTION_CLOSED;
-			return (connect());
-		}
-	}
+	
 	public void connectionFailed()
 	{
 		ExpCoordinator.printer.print(new String("ConnectionFailed Closed control socket for " + host + "." + port));

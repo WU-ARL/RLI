@@ -275,11 +275,6 @@ public class Topology
 		private void addSubnet(SubnetManager.Subnet subnet, VisitedPoint vp)//ONL.IPAddress nh)
 		{
 			SubnetManager.Subnet sn = subnet;
-			if (ExpCoordinator.isOldSubnet() && subnet != null)
-			{
-				sn = ((OldSubnetManager.Subnet)subnet).getRootSubnet();
-				if (sn.isEqual(((OldSubnetManager.Subnet)rootPort.getSubnet()).getRootSubnet()))  sn = subnet;
-			}
 			if	(sn != null && !subnetsReached.contains(sn))
 			{
 				VisitedSubnet vsn = new VisitedSubnet(sn, vp.nhip, vp.numHops, rootPort);
@@ -316,34 +311,26 @@ public class Topology
 			//setEnabled(false);
 		}
 		public void actionPerformed(ActionEvent e)
-		{		
-			if (!ExpCoordinator.isOldSubnet())
-			{
-				//super.actionPerformed(e);
-				final String opt0 = "OK";
-				final String opt1 = "Cancel";
-				Object[] options = {opt0,opt1};
-				int rtn = JOptionPane.showOptionDialog(ExpCoordinator.theCoordinator.getMainWindow(), 
-						"Previously generated routes will be removed first.", 
-						"Generate Default Routes", 
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE, 
-						null,
-						options,
-						options[0]);
+		{	
+		    //super.actionPerformed(e);
+		    final String opt0 = "OK";
+		    final String opt1 = "Cancel";
+		    Object[] options = {opt0,opt1};
+		    int rtn = JOptionPane.showOptionDialog(ExpCoordinator.theCoordinator.getMainWindow(), 
+							   "Previously generated routes will be removed first.", 
+							   "Generate Default Routes", 
+							   JOptionPane.YES_NO_OPTION,
+							   JOptionPane.QUESTION_MESSAGE, 
+							   null,
+							   options,
+							   options[0]);
 
-				if (rtn == JOptionPane.YES_OPTION)
-				{
-					//super.actionPerformed(e);
-					topology.generateDefaultRts();
-					if (ExpCoordinator.isRecording())
-						ExpCoordinator.recordEvent(SessionRecorder.GENERATE_DEFRTS, null);
-				}
-			}
-			else
+		    if (rtn == JOptionPane.YES_OPTION)
 			{
-				//topology.oldGenerateDefaultRts();
-				topology.generateDefaultRts();
+			    //super.actionPerformed(e);
+			    topology.generateDefaultRts();
+			    if (ExpCoordinator.isRecording())
+				ExpCoordinator.recordEvent(SessionRecorder.GENERATE_DEFRTS, null);
 			}
 		}
 	}
@@ -705,15 +692,10 @@ public class Topology
 				{
 					lnk.getPoint1().removeLink(lnk);
 					lnk.getPoint2().removeLink(lnk);
-
-					if (ExpCoordinator.isOldSubnet()) OldSubnetManager.removeLink((ONLComponent.PortBase)lnk.getPoint1(), (ONLComponent.PortBase)lnk.getPoint2());
-					else SubnetManager.removeLink((ONLComponent.PortBase)lnk.getPoint1(), (ONLComponent.PortBase)lnk.getPoint2());
+					SubnetManager.removeLink((ONLComponent.PortBase)lnk.getPoint1(), (ONLComponent.PortBase)lnk.getPoint2());
 				}
 			}
-			//if (cl != null) 
-			//{
-			return rtn; //(cl.removeComponent(c));  //CHANGE 11_3_2011
-			//}
+			return rtn; 
 		}
 		return false;
 	}

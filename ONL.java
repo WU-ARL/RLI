@@ -626,56 +626,19 @@ public class ONL
 				{            
 					public void propertyChange(PropertyChangeEvent e)
 					{
-						//ExpCoordinator.print(new String("ONL.UserAction.propertyChange action " + getValue(Action.NAME) + " ignore = " + ignoreObsStatus + " isobserver = " + ExpCoordinator.isObserver()), 3);
-						if (e.getPropertyName().equals(ExpCoordinator.OBSERVE))
-							setEnabled(!ExpCoordinator.isObserver());
 						if (e.getPropertyName().equals(ExpCoordinator.RECORDING))
 							setEnabled(!ExpCoordinator.isRecording());
 					}
 				});
-				setEnabled(!ExpCoordinator.isObserver() || !ExpCoordinator.isRecording());
+				setEnabled(true);
 			}
 		}
 		public boolean isEnabled()
 		{
-			//ExpCoordinator.print(new String("ONL.UserAction.isEnabled action " + getValue(Action.NAME) + " ignore = " + ignoreObsStatus + " isobserver = " + ExpCoordinator.isObserver()), 3);
-			if ((!ignoreObsStatus && ExpCoordinator.isObserver()) || 
-					ExpCoordinator.isRecording()) return false;
+			if (ExpCoordinator.isRecording()) return false;
 			else return(super.isEnabled());
 		}
-		public void propertyChange(PropertyChangeEvent e)
-		{
-			//ExpCoordinator.print(new String("ONL.UserAction.propertyChange action " + getValue(Action.NAME) + " ignore = " + ignoreObsStatus + " isobserver = " + ExpCoordinator.isObserver()), 3);
-			//if (!ignoreObsStatus && 
-			if (e.getPropertyName().equals(ExpCoordinator.OBSERVE))
-				setEnabled(ignoreObsStatus || !ExpCoordinator.isObserver());
-		}
-		/*
-    public void setIgnoreObs(boolean b) 
-    {
-      if (b != ignoreObsStatus)
-        {
-          ignoreObsStatus = b;
-          if (ignoreObsStatus && expPAction != null)
-            {
-              ExpCoordinator.theCoordinator.removePropertyListener(ExpCoordinator.OBSERVE, expPAction);
-              expPAction = null;
-            }
-          if (!ignoreObsStatus && expPAction == null)
-            {
-              expPAction = (new ExpPropertyAction(experimentWide)
-                {            
-                  public void propertyChange(PropertyChangeEvent e)
-                  {
-                    //ExpCoordinator.print(new String("ONL.UserAction.propertyChange action " + getValue(Action.NAME) + " ignore = " + ignoreObsStatus + " isobserver = " + ExpCoordinator.isObserver()), 3);
-                    if (e.getPropertyName().equals(ExpCoordinator.OBSERVE))
-                      setEnabled(!ExpCoordinator.isObserver());
-                  }
-                });
-            }
-          setEnabled(!ExpCoordinator.isObserver());
-        }
-        }*/
+	    public void propertyChange(PropertyChangeEvent e){}
 	}
 
 	public static class CompositeAction extends UserAction

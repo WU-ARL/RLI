@@ -97,7 +97,6 @@ public class Experiment //implements MenuFileAction.Saveable
 	private JLabel pwdTextField = null;
 	protected ExpCoordinator expCoordinator = null;
 
-	private Observer observer = null;
 
 	//private list of plugins, tgs, apps, filters, etc.
 	private ONLComponentList params = null;
@@ -118,7 +117,6 @@ public class Experiment //implements MenuFileAction.Saveable
 	//private MenuFileAction loadAction = null;
 
 	private Topology topology = null;
-	private VirtualTopology vtopology = null;
 
 	private Vector eventListeners = null;
 	private int nextRefNum = 1;
@@ -156,7 +154,6 @@ public class Experiment //implements MenuFileAction.Saveable
 			nodes = new ONLComponentList(experiment.topology.getNodes());
 			links = new ONLComponentList(experiment.topology.getLinks());
 			params = new ONLComponentList(experiment.params);
-			ExpCoordinator.print(new String("Snapshot for " + experiment.getLabel() + ":" + experiment.getID() + " experiment.params: " + experiment.params.size() + " params: " + params.size()), Observer.TEST_OBS);
 			clusters = new Vector(experiment.topology.getClusters());
 			monitorDisplays = new MonitorManager.Snapshot(experiment.expCoordinator.getMonitorManager());
 		}
@@ -592,31 +589,12 @@ public class Experiment //implements MenuFileAction.Saveable
 		PWPropListener pl = new PWPropListener();
 		addPropertyListener(GENERATEDPW_TOK, pl);
 	}
-	public VirtualTopology getVirtualTopology() 
-	{
-		if (vtopology == null) vtopology = new VirtualTopology(expCoordinator);
-		return vtopology;
-	}
 	public boolean isLive() 
 	{ 
 		//if (ExpCoordinator.isTestLevel(ExpCoordinator.CMPTEST)) 
 		return (properties.getPropertyBool(LIVE));
 		//else 
 		//return true;
-	}
-	public void setObserver(Observer o)
-	{
-		if (o == null) removeObserver();
-		else
-		{
-			if (observer == null)
-			{
-				observer = o;
-				addExpListener(observer);
-				expCoordinator.getMonitorManager().addGraphListener(observer);
-				expCoordinator.addStatusListener(observer);
-			}
-		}
 	}
 	public void writeXML(BufferedWriter wrtr) throws java.io.IOException
 	{
@@ -630,7 +608,6 @@ public class Experiment //implements MenuFileAction.Saveable
 			xmlWrtr.writeAttribute(ExperimentXML.VERSION, String.valueOf(ExpCoordinator.VERSION));
 			xmlWrtr.writeAttribute(ExperimentXML.EXPNAME, properties.getProperty(LABEL));
 			if (getPropertyBool(SAVE_PW_TOK)) xmlWrtr.writeAttribute(ExperimentXML.GENERATED_PW, getGeneratedPW());
-			if (ExpCoordinator.isOldSubnet()) xmlWrtr.writeAttribute(ExperimentXML.OLDSUBNET, String.valueOf(true));
 			//write main window xy coordinates
 			ONLMainWindow mw = expCoordinator.getMainWindow();
 			xmlWrtr.writeStartElement(ExperimentXML.MWPOSITION);
@@ -654,13 +631,6 @@ public class Experiment //implements MenuFileAction.Saveable
 			//xmlWrtr.writeProcessingInstruction(ExperimentXML.MONITORING, onl_strwrtr.getBuffer().toString());
 			expCoordinator.getMonitorManager().writeXML(xmlWrtr);
 			xmlWrtr.writeEndElement(); //Monitoring
-			//VirtualTOPOLOGY
-			if (vtopology != null && vtopology.getNumNodes() > 0)
-			{
-				xmlWrtr.writeStartElement(ExperimentXML.VTOPO);
-				vtopology.writeXML(xmlWrtr);
-				xmlWrtr.writeEndElement();//Topology
-			}
 			//end Experiment
 			xmlWrtr.writeEndElement();//Experiment
 			xmlWrtr.writeEndDocument();
@@ -886,7 +856,6 @@ public class Experiment //implements MenuFileAction.Saveable
 			}
 			else removeParam(c);
 		}
-		if (observer != null) c.removeONLCListener(observer);
 	}
 	public void removeCluster(int ref) { removeCluster(topology.getCluster(ref));}
 	public void removeCluster(Cluster.Instance ci)
@@ -910,13 +879,6 @@ public class Experiment //implements MenuFileAction.Saveable
 		Vector removals = getDescendants(c);
 		if (descendants != null) descendants.addAll(removals);
 		int max = removals.size();
-		if (observer != null) 
-		{
-			for (int i = 0; i < max; ++i)
-			{
-				((ONLComponent)removals.elementAt(i)).removeONLCListener(observer);
-			}
-		}
 		params.removeAll(removals);
 	}
 	private void addDescendants(Vector descendants)
@@ -944,12 +906,10 @@ public class Experiment //implements MenuFileAction.Saveable
 		if (!params.contains(c))
 		{
 			ExpCoordinator.print(new String("\nExperiment(" + getLabel() + ":" + getID() +").addParam " + c.getLabel() + " params:" + params.size()), 4);
-			if (observer != null) c.addONLCListener(observer);
-			else ExpCoordinator.print("   observer null", 8);
+			ExpCoordinator.print("   observer null", 8);
 			params.addComponent(c);
 			fireEvent(new Event(c, this, Event.ADD|Event.PARAM));
 			ExpCoordinator.print(new String("    after add " + c.getLabel() + " params:" + params.size() +"\n"), 4);
-			//if (observer != null) c.addONLCListener(observer);
 		}
 	}
 	public void removeParam(ONLComponent c) 
@@ -965,8 +925,6 @@ public class Experiment //implements MenuFileAction.Saveable
 	public ONLComponent addNode(ONLComponent oc) 
 	{
 		ExpCoordinator.print(new String("Experiment.addNode " + oc.getLabel() + " isLive:" + isLive()), 5);
-		if (observer != null) oc.addONLCListener(observer);
-		else ExpCoordinator.printer.print("   observer null", 8);
 		ONLComponent c = topology.addComponent(oc);
 
 		//if (c == null) return c; //node was already there
@@ -976,8 +934,7 @@ public class Experiment //implements MenuFileAction.Saveable
 			expCoordinator.addEdit(new AddNodeEdit(c, this));
 			//otherwise it's in a cluster and the edit will be added when the cluster becomes active
 			//c.setState( ONLComponent.WAITING);
-			if (ExpCoordinator.isSPPMon()) c.setProperty(ONLComponent.STATE, ONLComponent.ACTIVE);
-			else c.setState( ONLComponent.WAITING);
+			c.setState( ONLComponent.WAITING);
 			fireEvent(new Event(c, this, Event.ADD|Event.NODE));
 		}
 		if (c instanceof Hardware)
@@ -1009,8 +966,6 @@ public class Experiment //implements MenuFileAction.Saveable
 		ONLComponent c = topology.addComponent(oc);
 		//if (c == null) return c; //already there
 		ExpCoordinator.printer.print(new String("Experiment::addLink " + c.getLabel()), 1);
-		if (observer != null) c.addONLCListener(observer);
-		else ExpCoordinator.printer.print("   observer null", 8);
 		if (!(c.isActive() || c.isWaiting()) && isLive()) 
 		{
 			if (isLive()) 
@@ -1106,8 +1061,6 @@ public class Experiment //implements MenuFileAction.Saveable
 				ExpCoordinator.getMainWindow().getJMenuBar().validate();
 				ExpCoordinator.getMainWindow().getJMenuBar().repaint();
 			}
-		//clear virtual topology
-		if (vtopology != null) vtopology.clear();
 		//remove from main window save action save action
 		//expCoordinator.removeAction(saveAction, ExpCoordinator.SAVEFILE);
 		//should cycle through nodes and links setting up removes for each or sending a single clear exp command
@@ -1120,23 +1073,8 @@ public class Experiment //implements MenuFileAction.Saveable
 		}
 		//clear topology
 		topology.clear();
-		if (!expCoordinator.isSPPMon())
-		{
-			expCoordinator.sendMessage(new NCCP_ClearExpReq(this));
-			removeObserver();
-			SubnetManager.clear();
-			OldSubnetManager.clear();
-		}
-	}
-	public void removeObserver()
-	{
-		if (observer != null)
-		{
-			removeExpListener(observer);
-			expCoordinator.getMonitorManager().removeGraphListener(observer);
-			expCoordinator.removeStatusListener(observer);
-			observer = null;
-		}
+		expCoordinator.sendMessage(new NCCP_ClearExpReq(this));
+		SubnetManager.clear();
 	}
 	public boolean isEmpty() { return (topology.getNumNodes() == 0 && params.isEmpty());}
 	public void addPropertyListener(PropertyChangeListener l) { properties.addListener(l);}

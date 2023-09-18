@@ -214,7 +214,6 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 	{
 		private Experiment experiment;
 		private SubUndoManager undoManager;
-		private Observer.ObserveRequest.NCCP_Response observeResponse = null;
 
 		public NCCP_ExperimentReq(Experiment e, SubUndoManager um)
 		{
@@ -223,18 +222,11 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 			//ExpCoordinator.print(new String("NCCP_ExperimentReq.NCCP_ExperimentReq #edits = " + um.size()), 4);
 			request = new NCCP_Requester(e);
 			response = new NCCP_Response();
-			observeResponse = new Observer.ObserveRequest.NCCP_Response();
 			undoManager = um;
 		}
 		public void retrieveData(NCCP.ResponseHeader hdr, DataInput din) throws IOException
 		{
-			if (hdr.getOp() == ExpDaemon.NCCP_Operation_ObserveExpReq)
-			{
-				observeResponse.setHeader(hdr); //set header info
-				observeResponse.retrieveData(din); //get op specific return data
-				processResponse(observeResponse);
-			}
-			else super.retrieveData(hdr, din);
+		    super.retrieveData(hdr, din);
 		}
 		public void processResponse(NCCP.ResponseBase r)
 		{
@@ -242,33 +234,7 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 			//ExpCoordinator.print(new String("NCCP_ExperimentReq.processResponse #edits = " + undoManager.size()), 4);
 			ExpCoordinator expc = ExpCoordinator.theCoordinator;
 
-			//if (r == observeResponse)
-			//{
 			boolean show_error = true;
-			if (r.getOp() == ExpDaemon.NCCP_Operation_ObserveExpReq)
-			{
-				Observer.ObserveRequest.NCCP_Response oresp = (Observer.ObserveRequest.NCCP_Response)r;
-				//inform user of observation request
-				Object[] options = {"Invite", "Reject"};
-				Observer.ObserveData od = oresp.getObserveData();
-
-				ExpCoordinator.print(new String("ONLUndoManager.processResponse. observe request odata  " + od.toString()), 5);
-				Object[] paramObjects = {new String(od.oname + " wants to observe your experiment.")};
-				int rtn = JOptionPane.showOptionDialog(ExpCoordinator.getMainWindow(), 
-						paramObjects, 
-						"Observation Request", 
-						JOptionPane.YES_NO_OPTION,
-						JOptionPane.QUESTION_MESSAGE, 
-						null,
-						options,
-						options[0]);
-				//if user says yes launch observation window
-				boolean accept = (rtn == JOptionPane.YES_OPTION);
-				if (accept) Observer.start();
-				//send response
-				expc.sendRequest(new Observer.ObserveRequest(experiment.getID(),od.oname, accept));
-				return;
-			}
 			if (r.getStatus() == NCCP.Status_Fine) 
 			{
 				experiment.setProperty(ONLComponent.STATE, ONLComponent.ACTIVE);
@@ -516,17 +482,16 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 		public void end()
 		{
 			Experiment exp = parent.expCoordinator.getCurrentExp();
-			boolean sppmon = ExpCoordinator.isSPPMon();
-			if (!sppmon && (exp.getProperty(ONLComponent.STATE).equals(ONLComponent.NOT_INIT) || exp.getProperty(ONLComponent.STATE).equals(ONLComponent.FAILED)))
+			if (exp.getProperty(ONLComponent.STATE).equals(ONLComponent.NOT_INIT) || exp.getProperty(ONLComponent.STATE).equals(ONLComponent.FAILED))
 			{
 				parent.expCoordinator.getUserInfo();
 				parent.expCoordinator.sendRequest(new NCCP_ExperimentReq(parent.expCoordinator.getCurrentExp(), this));
 				exp.setProperty(ONLComponent.STATE, ONLComponent.WAITING);
 			}
-			if (sppmon || exp.getProperty(ONLComponent.STATE).equals(ONLComponent.ACTIVE))
+			if (exp.getProperty(ONLComponent.STATE).equals(ONLComponent.ACTIVE))
 			{
 				//ExpCoordinator.print(new String("OUM.end start #edits = " + edits.size()), 4);
-				if (!sppmon) edits.addAll(exp.getFailedEdits());
+				edits.addAll(exp.getFailedEdits());
 				//ExpCoordinator.print(new String("OUM.end before super.end #edits = " + edits.size()), 4);
 				super.end();
 				//ExpCoordinator.print(new String("OUM.end before removing cancelled #edits = " + edits.size()), 4);
@@ -539,7 +504,7 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 					elem = (ONLComponent.Undoable)edits.elementAt(i);
 					elem.commit();
 				}
-				if (!sppmon && !parent.expCoordinator.isTopoSet())
+				if (!parent.expCoordinator.isTopoSet())
 					parent.expCoordinator.sendRequest(new NCCP_EndCommitReq(exp)); //PROBLEM don't want to send everytime just on topo. change
 				parent.pendingEdits.doNext();
 			}
@@ -759,7 +724,7 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 			undoAction.setEnabled(false);
 			uncommittedEdits = new SubUndoManager(undoAction, this);
 			pendingEdits.add(tmp);
-			if (!expCoordinator.isSPPMon() && !expCoordinator.isConnected())// && !expCoordinator.isTestLevel(ExpCoordinator.NPTEST))
+			if (!expCoordinator.isConnected())// && !expCoordinator.isTestLevel(ExpCoordinator.NPTEST))
 			{
 				//listen on connection when connection is made can end the
 				//edit, but need to save the set the user wants to commit as separate.
@@ -775,7 +740,7 @@ public class ONLUndoManager extends UndoManager implements NCCPConnection.Connec
 		}
 		else 
 		{
-			if (!expCoordinator.isSPPMon() && !expCoordinator.isConnected())// && !expCoordinator.isTestLevel(ExpCoordinator.NPTEST))
+			if (!expCoordinator.isConnected())// && !expCoordinator.isTestLevel(ExpCoordinator.NPTEST))
 			{
 				if (!expCoordinator.connect()) commitAction.setEnabled(true);
 			}

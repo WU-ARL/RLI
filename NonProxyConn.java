@@ -167,15 +167,15 @@ public class NonProxyConn //extends NodeLabel
 	  try { connect();}
 	catch(UnknownHostException e) 
 	  {
-	    nccpconn.informUserError("Don't know about host: " + host + ":" + e.getMessage());
+	    System.out.println("Don't know about host: " + host + ":" + e.getMessage());
 	  }
 	catch (SocketTimeoutException e)
 	  {
-	    nccpconn.informUserError("Socket time out for " + host + ":" + e.getMessage());
+	    System.out.println("Socket time out for " + host + ":" + e.getMessage());
 	  }
 	catch (IOException e) 
 	  {
-	    nccpconn.informUserError("Couldnt get I/O for " + host+ ":" + e.getMessage());
+	    System.out.println("Couldnt get I/O for " + host+ ":" + e.getMessage());
 	  }
       }
       if (connected)

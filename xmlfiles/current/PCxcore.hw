@@ -1,0 +1,2 @@
+<?xml version="1.0"?>
+<hardware typeName="PCxcore" typeCode="4" version="1"><clusterOnly>false</clusterOnly><daemon>3551</daemon><componentType>host</componentType><fields/><init opcode="0" numParams="1"><displayLabel>UserDaemonPath</displayLabel><description>UserDaemonPath</description><param editable="true"><plabel>path</plabel><ptype>string</ptype></param></init><commands/><monitoring/><ports numPorts="1"><fields/><commands/><monitoring/></ports></hardware>

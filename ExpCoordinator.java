@@ -48,8 +48,8 @@ import org.xml.sax.*;
 
 public class ExpCoordinator //implements Mode.MListener
 {
-	public static final double VERSION = 9.3;
-	public static final int VERSION_BYTES = 0x9300; //& with ops to add version
+	public static final double VERSION = 9.4;
+	public static final int VERSION_BYTES = 0x9400; //& with ops to add version
 	public static PrintMessage printer = null;
 	public static ExpCoordinator theCoordinator = null;
 	public static final int NEW = 0;
@@ -958,22 +958,26 @@ public class ExpCoordinator //implements Mode.MListener
 
 	
 		//hwmanager.addFromResource("IXP", "IXP.hw");
-		hwmanager.addFromResource("PC1core", "PC1core.hw");
-		hwmanager.addFromResource("PC2core", "PC2core.hw");
-		hwmanager.addFromResource("PC8core1g", "PC8core1g.hw");
-		hwmanager.addFromResource("PC8core10g", "PC8core10g.hw");
-		hwmanager.addFromResource("VM", "VM.hw");
+		//hwmanager.addFromResource("PC1core", "PC1core.hw");
+		hwmanager.addFromResource("PC2core", "xmlfiles/current/PC2core.hw");
+		hwmanager.addFromResource("PC8core2port", "xmlfiles/current/PC8core2port.hw");
+		hwmanager.addFromResource("PC8core1g", "xmlfiles/current/PC8core1g.hw");
+		hwmanager.addFromResource("PC8core10g", "xmlfiles/current/PC8core10g.hw");
+		hwmanager.addFromResource("VM", "xmlfiles/current/VM.hw");
+		hwmanager.addFromResource("ExtDev", "xmlfiles/current/ExtDev.hw");
 		//hwmanager.addFromResource("PC48core", "PC48core.hw");
-		hwmanager.addSubtypeFromResource("VMsmall.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/VMsmall.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/ExtHost.shw");
 		//hwmanager.addSubtypeFromResource("VM64bit.shw");
 		//hwmanager.addSubtypeFromResource("VM64bit_2port.shw");
 		//hwmanager.addSubtypeFromResource("HOST1core.shw");
 		//hwmanager.addSubtypeFromResource("HOST2core.shw");
-		hwmanager.addSubtypeFromResource("HostFltrs1corewLimit.shw");
-		hwmanager.addSubtypeFromResource("HostFltrs2corewLimit.shw");
-		hwmanager.addSubtypeFromResource("SWR5_1.shw");
-		hwmanager.addSubtypeFromResource("SWR8.shw");
-		hwmanager.addSubtypeFromResource("SWR16.shw");
+		//hwmanager.addSubtypeFromResource("HostFltrs1corewLimit.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/HostFltrs2corewLimit.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/HostF8core2port.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/SWR5_1.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/SWR8.shw");
+		hwmanager.addSubtypeFromResource("xmlfiles/current/SWR16.shw");
 		//hwmanager.addSubtypeFromResource("HOST48core.shw");
 		//hwmanager.addSubtypeFromResource("NPR.shw");
 		//HardwareSpec ixp_spec = hwmanager.getHardware("IXP");
